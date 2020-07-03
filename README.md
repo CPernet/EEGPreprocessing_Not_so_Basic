@@ -2,6 +2,8 @@
 
 This repository was created for OHBM Education 2020. The code presents the different aspects discussed in the course. It combines different elements into a coherent analysis illustrating the choices to make when analysis EEG data, here from a simple ERP experiment.
 
+The rendering for the Matlab/EEGLAB code (filtering,ICA denoising,referencing) can be seen [here](https://cpernet.github.io/EEGPreprocessing_Not_so_Basic/)
+
 ## The data
 
 The data used in this tutorial come from Wakeman and Henson (2015). In this experiment, MEG-EEG data were collected while subjects viewed famous, unfamiliar and scrambled faces. Each image was repeated twice (immediately in 50% of cases and 5–10 stimuli apart for the other 50%) and subjects pressed one of two keys with their left or right index finger indicating how symmetric they regarded each image relative to the average.
