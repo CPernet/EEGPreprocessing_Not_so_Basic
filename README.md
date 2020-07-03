@@ -8,7 +8,9 @@ The code and rendering for the Pytjon/MNE Python can be seen [here](https://gith
 ## The data
 
 The data used in this tutorial come from Wakeman and Henson (2015). In this experiment, MEG-EEG data were collected while subjects viewed famous, unfamiliar and scrambled faces. Each image was repeated twice (immediately in 50% of cases and 5–10 stimuli apart for the other 50%) and subjects pressed one of two keys with their left or right index finger indicating how symmetric they regarded each image relative to the average.
+
 The data were prepared (i.e. EEG extracted, timing corrected, electrode position re-oriented, event recorded) by Dung Truong, Ramon Martinez & Arnaud Delorme and can be downloaded from [OpenNeuro](10.18112/openneuro.ds002718.v1.0.2).
+
 /data folder contains sub011 used to illustrate changes related to preprocessing.  
 **You must download the .fdt file and unzip it to re-run the analysis**
 
