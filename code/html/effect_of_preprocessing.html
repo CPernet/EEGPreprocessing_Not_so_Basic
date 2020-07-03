@@ -1,0 +1,1427 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>OHBM2020 EEG Preprocessing: not so basic after all</title><meta name="generator" content="MATLAB 9.8"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2020-07-03"><meta name="DC.source" content="effect_of_preprocessing.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h1>OHBM2020 EEG Preprocessing: not so basic after all</h1><!--introduction--><p><b>This script illustrate the effect of filtering, IC labeling and referencing on statistical results.</b> The data are taken from <a href="https://openneuro.org/datasets/ds002718/versions/1.0.2">https://openneuro.org/datasets/ds002718/versions/1.0.2</a> We use here sub-011 only. The code was writen by Cyril Pernet, reusing Nicolas Langers' code from <a href="https://osf.io/z8uqx/">OSF</a> and snippet from LI Dong.</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">let's check the environement, files, etc</a></li><li><a href="#2">we start by loading the data and removing EKG, HEOG, VEOG</a></li><li><a href="#3">bad channel indentification</a></li><li><a href="#4"><a href="https://www.sciencedirect.com/science/article/pii/S1053811919309474">Zapline</a> to remove Power line artifacts</a></li><li><a href="#5">Let's look at the effect of high-pass and low-pass filters on artefacts</a></li><li><a href="#8">Temporary filtering</a></li><li><a href="#9">Re-referencing</a></li><li><a href="#10">Check ERPs and statistics</a></li></ul></div><h2 id="1">let's check the environement, files, etc</h2><pre class="codeinput">clc
+clear <span class="string">variables</span>
+current = pwd;  <span class="comment">%% assuming we are in \code</span>
+addpath([current filesep <span class="string">'NT_tools'</span>]);
+addpath([current filesep <span class="string">'local_functions'</span>]);
+
+<span class="comment">% check all the tools we need are here</span>
+<span class="keyword">if</span> ~exist(<span class="string">'eeglab.m'</span>,<span class="string">'file'</span>)
+    error(<span class="string">'eeglab is not in your matlab path'</span>)
+<span class="keyword">else</span>
+    eeglab; <span class="comment">% allows loading plugins</span>
+<span class="keyword">end</span>
+
+<span class="keyword">if</span> ~exist(<span class="string">'iclabel.m'</span>,<span class="string">'file'</span>)
+    error(<span class="string">'IClabewl plugin is missing, please install'</span>)
+<span class="keyword">end</span>
+
+<span class="keyword">if</span> ~exist(<span class="string">'pop_viewprops.m'</span>,<span class="string">'file'</span>)
+    error(<span class="string">'ViewProps plugin is missing, please install'</span>)
+<span class="keyword">end</span>
+
+<span class="keyword">if</span> ~exist(<span class="string">'rest_refer.m'</span>,<span class="string">'file'</span>)
+    error(<span class="string">'REST plugin is missing, please install'</span>)
+<span class="keyword">end</span>
+
+<span class="keyword">if</span> exist(<span class="string">'limo_eeg.m'</span>,<span class="string">'file'</span>)
+    root = fileparts(which(<span class="string">'limo_eeg'</span>));
+    addpath([root filesep <span class="string">'limo_cluster_functions'</span>]);
+    addpath([root filesep <span class="string">'external'</span> filesep <span class="string">'color_maps'</span>]);
+    diverging_bwr = load([root filesep <span class="string">'external'</span> filesep <span class="string">'color_maps'</span> filesep <span class="string">'diverging_bwr.mat'</span>]);
+    diverging_bwr = diverging_bwr.dmap;
+<span class="keyword">else</span>
+    error(<span class="string">'LIMO tools plugin is missing, please install'</span>)
+<span class="keyword">end</span>
+
+<span class="comment">% locate the data</span>
+datafolder = [fileparts(current) filesep <span class="string">'data'</span> filesep <span class="string">'sub-011'</span> filesep <span class="string">'eeg'</span>];
+<span class="keyword">if</span> ~exist(fullfile(datafolder,<span class="string">'sub-011_task-FaceRecognition_eeg.set'</span>),<span class="string">'file'</span>)
+    warndlg(<span class="string">'Can''t locate the data - select the data file'</span>)
+    [datafile,datafolder] = uigetfile(<span class="string">'*.set'</span>,<span class="string">'select a subjects'' eeg file'</span>);
+    <span class="keyword">if</span> isequal(datafile,0) || isempty(datafile,0)
+        disp(<span class="string">'Selection cancelled'</span>); <span class="keyword">return</span>
+    <span class="keyword">else</span>
+        datafile  = fullfile(datafolder, datafile);
+    <span class="keyword">end</span>
+<span class="keyword">else</span>
+    datafile = fullfile(datafolder,<span class="string">'sub-011_task-FaceRecognition_eeg.set'</span>);
+<span class="keyword">end</span>
+</pre><pre class="codeoutput">Some menus items hidden. Use Preference menu to show them all.
+eeglab: options file is C:\Users\cpernet\eeg_options.m
+EEGLAB warning: there can be only one EEGLAB window, closing old one
+Retrieving plugin versions from server...
+Retreiving download statistics...
+EEGLAB: adding "Biosig" to the path; subfolders (if any) might be missing from the path
+EEGLAB: adding "ICLabel" v1.2.6 (see &gt;&gt; help eegplugin_iclabel)
+WARNING: for plugin "REST" version in the folder name "1.1" and in the eegplugin_ file "1.0" differ
+EEGLAB: adding "REST" v1.1 (see &gt;&gt; help eegplugin_rest)
+EEGLAB: adding "SEREEGA1.0.11-bet" v? (see &gt;&gt; help eegplugin_sereega)
+EEGLAB: adding "Viewprops" v1.5.4 (see &gt;&gt; help eegplugin_viewprops)
+EEGLAB: adding "automagic" v2.3.8 (see &gt;&gt; help eegplugin_automagic)
+EEGLAB: adding "clean_rawdata" v2.1 (see &gt;&gt; help eegplugin_clean_rawdata)
+EEGLAB: adding "dipfit" v3.3 (see &gt;&gt; help eegplugin_dipfit)
+EEGLAB: adding "firfilt" v2.4 (see &gt;&gt; help eegplugin_firfilt)
+EEGLAB: adding "limo_tools" v2.0 (see &gt;&gt; help eegplugin_limo)
+You are using the latest version of EEGLAB.
+</pre><img vspace="5" hspace="5" src="effect_of_preprocessing_01.png" alt=""> <h2 id="2">we start by loading the data and removing EKG, HEOG, VEOG</h2><pre class="codeinput">EEG = pop_loadset(datafile);
+EEG = pop_select(EEG, <span class="string">'nochannel'</span>,{<span class="string">'EEG061'</span>,<span class="string">'EEG062'</span>,<span class="string">'EEG063'</span>,<span class="string">'EEG064'</span>});
+
+figure(<span class="string">'Name'</span>,<span class="string">'Raw data topography'</span>);
+subplot(1,2,1);
+topoplot(zscore(double(EEG.data(:,100))),EEG.chanlocs,<span class="string">'electrodes'</span>,<span class="string">'off'</span>,<span class="string">'colormap'</span>,diverging_bwr);
+title(<span class="string">'Original file - data frame 100'</span>);subplot(1,2,2)
+pop_spectopo(EEG, 1, [0  size(EEG.data,2)],<span class="string">'EEG'</span>,<span class="string">'percent'</span>,15,<span class="keyword">...</span>
+    <span class="string">'freq'</span>,[6 10 22 50],<span class="string">'freqrange'</span>,[2 70],<span class="string">'electrodes'</span>,<span class="string">'off'</span>);
+set(gcf,<span class="string">'Colormap'</span>,diverging_bwr);
+drawnow
+</pre><pre class="codeoutput">pop_loadset(): loading file D:\EEGPreprocessing_Not_so_Basic\data\sub-011\eeg\sub-011_task-FaceRecognition_eeg.set ...
+Reading float file 'D:\EEGPreprocessing_Not_so_Basic\data\sub-011\eeg\sub-011_task-FaceRecognition_eeg.fdt'...
+Removing 4 channel(s)...
+pop_spectopo(): selecting time range   0.00 ms to 743000.00 ms (points 1 to 185751)
+Pop_spectopo: finding data discontinuities
+Selecting the first 15.0% of data for analysis...
+Click on each trace for channel/component index
+</pre><img vspace="5" hspace="5" src="effect_of_preprocessing_02.png" alt=""> <h2 id="3">bad channel indentification</h2><p>we use here cleanraw_data.m comparing results with or witout 1Hz temporary filter</p><pre class="codeinput"><span class="comment">% create the copy and remove bad channels (includes a filter at 0.5Hz)</span>
+EEG_badchan = EEG;
+EEG_badchan = pop_clean_rawdata(EEG_badchan,<span class="string">'FlatlineCriterion'</span>,5,<span class="string">'ChannelCriterion'</span>,0.8,<span class="keyword">...</span>
+    <span class="string">'LineNoiseCriterion'</span>,4,<span class="string">'Highpass'</span>,[0.25 0.75] ,<span class="keyword">...</span>
+    <span class="string">'BurstCriterion'</span>,<span class="string">'off'</span>,<span class="string">'WindowCriterion'</span>,<span class="string">'off'</span>,<span class="string">'BurstRejection'</span>,<span class="string">'off'</span>,<span class="keyword">...</span>
+    <span class="string">'Distance'</span>,<span class="string">'Euclidian'</span>,<span class="string">'WindowCriterionTolerances'</span>,<span class="string">'off'</span> );
+
+<span class="comment">% Temporary highpass filter 1Hz</span>
+EEGf_badchan = EEG;
+EEGf_badchan = pop_eegfiltnew(EEGf_badchan,1,0);
+EEGf_badchan = pop_clean_rawdata(EEGf_badchan,<span class="string">'FlatlineCriterion'</span>,5,<span class="string">'ChannelCriterion'</span>,0.8,<span class="keyword">...</span>
+    <span class="string">'LineNoiseCriterion'</span>,4,<span class="string">'Highpass'</span>,[0.25 0.75] ,<span class="keyword">...</span>
+    <span class="string">'BurstCriterion'</span>,<span class="string">'off'</span>,<span class="string">'WindowCriterion'</span>,<span class="string">'off'</span>,<span class="string">'BurstRejection'</span>,<span class="string">'off'</span>,<span class="keyword">...</span>
+    <span class="string">'Distance'</span>,<span class="string">'Euclidian'</span>,<span class="string">'WindowCriterionTolerances'</span>,<span class="string">'off'</span> );
+
+<span class="comment">% visualize and compare results (new first, old second)</span>
+vis_artifacts(EEG_badchan, EEG)
+vis_artifacts(EEGf_badchan, EEG)
+
+<span class="comment">% find index of the retained channels and remove from original data</span>
+tbl_channels = struct2table(EEGf_badchan.chanlocs);
+ind_retained = find(arrayfun(@(x)ismember(x.labels,tbl_channels.labels),EEG.chanlocs));
+ind_bad      = setdiff(1:size(EEG.chanlocs,1),ind_retained);
+EEG          = pop_select(EEG, <span class="string">'nochannel'</span>,{EEG.chanlocs(ind_bad).labels});
+</pre><pre class="codeoutput">Scanning for bad channels...
+clean_channel:   1/594 blocks, 0.4 minutes remaining.
+clean_channel:   2/594 blocks, 0.4 minutes remaining.
+clean_channel:   3/594 blocks, 0.4 minutes remaining.
+....
+clean_channel: 594/594 blocks, 0.0 minutes remaining.
+Removing 1 channel(s)...
+Use vis_artifacts to compare the cleaned data to the original.
+Done.
+pop_eegfiltnew() - performing 827 point highpass filtering.
+pop_eegfiltnew() - transition band width: 1 Hz
+pop_eegfiltnew() - passband edge(s): 1 Hz
+pop_eegfiltnew() - cutoff frequency(ies) (-6 dB): 0.5 Hz
+pop_eegfiltnew() - filtering the data (zero-phase, non-causal)
+firfilt(): |====================| 100%, ETE 00:00
+Scanning for bad channels...
+clean_channel:   1/594 blocks, 0.4 minutes remaining.
+clean_channel:   2/594 blocks, 0.5 minutes remaining.
+clean_channel:   3/594 blocks, 0.4 minutes remaining.
+....
+clean_channel: 594/594 blocks, 0.0 minutes remaining.
+Removing 1 channel(s)...
+Use vis_artifacts to compare the cleaned data to the original.
+Done.
+
+Removing 1 channel(s)...
+</pre><img vspace="5" hspace="5" src="effect_of_preprocessing_03.png" alt=""> <img vspace="5" hspace="5" src="effect_of_preprocessing_04.png" alt=""> <img vspace="5" hspace="5" src="effect_of_preprocessing_05.png" alt=""> <h2 id="4"><a href="https://www.sciencedirect.com/science/article/pii/S1053811919309474">Zapline</a> to remove Power line artifacts</h2><p>Empirical tests showed that 7 components are required to sufficiently remove the line noise - note the spatial distribution of PSD values stays the same at the different frequencies, except a small change posteriorly at the ~22Hz <a href="https://en.wikipedia.org/wiki/Harmonic">sub-harmonic</a> frequency</p><pre class="codeinput"><span class="comment">% Notch filter (better not used) would be:</span>
+<span class="comment">% EEG = pop_eegfiltnew(EEG, 48,52,826,1,[],0);</span>
+
+<span class="comment">% test Zapline with different number of components:</span>
+line_noise_freq = 50; <span class="comment">% 50Hz line noise</span>
+FLINE           = line_noise_freq/EEG.srate; <span class="comment">% line frequency</span>
+p.nfft          = 1024;
+ncomp           = [3 5 7];
+
+figure(<span class="string">'Name'</span>,<span class="string">'Power line removal - Zapline 3-5-7 components'</span>, <span class="keyword">...</span>
+    <span class="string">'units'</span>,<span class="string">'normalized'</span>,<span class="string">'outerposition'</span>,[0 0 1 1])
+<span class="keyword">for</span> n = 3:-1:1
+    [clean, noise] = nt_zapline(EEG.data',FLINE,ncomp(n));
+    EEGzap{n}      = EEG;
+    EEGzap{n}.data = clean';
+    subplot(1,3,n);
+    pop_spectopo(EEGzap{n}, 1, [0  size(EEGzap{n}.data,2)],<span class="string">'EEG'</span>,<span class="string">'percent'</span>,15,<span class="keyword">...</span>
+        <span class="string">'freq'</span>, [6 10 22 line_noise_freq],<span class="string">'freqrange'</span>,[2 70],<span class="string">'electrodes'</span>,<span class="string">'off'</span>);
+    set(gcf,<span class="string">'Colormap'</span>,diverging_bwr);
+<span class="keyword">end</span>
+
+<span class="comment">% Plot the the raw vs clean/removed signal (here for 7 components):</span>
+
+Power_cleanEEG = EEGzap{3}; <span class="comment">% this is the right data</span>
+clear <span class="string">EEGzap</span>                <span class="comment">% clear up memory</span>
+
+<span class="comment">% Compute the PSD of each channel and add them (nt_dpect_plot computes</span>
+<span class="comment">% the Power Spectral Density estimate via &lt;https://en.wikipedia.org/wiki/Welch%27s_method#:~:text=Welch's%20method%2C%20named%20after%20Peter,a%20signal%20at%20different%20frequencies. Welch's method&gt;)</span>
+<span class="comment">% Note here the normalization by sqrt(mean(EEG.data(:)).^2), avg power of</span>
+<span class="comment">% the raw data</span>
+fprintf(<span class="string">'proportion of non-DC power removed %g\n:'</span>, <span class="keyword">...</span>
+    nt_wpwr(EEG.data-Power_cleanEEG.data)/nt_wpwr(nt_demean(EEG.data)));
+[psd_raw ,fr] = nt_spect_plot((EEG.data/sqrt(mean(EEG.data(:).^2)))',p.nfft,[],[],1/FLINE);
+[psd_zap ,fz] = nt_spect_plot((Power_cleanEEG.data/sqrt(mean(EEG.data(:).^2)))',p.nfft,[],[],1/FLINE);
+[psd_diff,fd] = nt_spect_plot(((EEG.data-Power_cleanEEG.data)/sqrt(mean(EEG.data(:).^2)))',p.nfft,[],[],1/FLINE);
+
+figure(<span class="string">'Name'</span>,<span class="string">'Raw vs Zapline corrected PSD'</span>);
+subplot(2,1,1); semilogy(fr,abs(psd_raw)/sum(psd_raw),<span class="string">'LineWidth'</span>,2);
+hold <span class="string">on</span>; grid <span class="string">on</span>; semilogy(fz,abs(psd_zap)/sum(psd_zap),<span class="string">'--'</span>,<span class="string">'LineWidth'</span>,2);
+legend(<span class="string">'raw'</span>,<span class="string">'clean'</span>); legend <span class="string">boxoff</span>; title(<span class="string">'raw vs clean'</span>)
+ylabel(<span class="string">'relative power'</span>); subplot(2,1,2);
+semilogy(fd,abs(psd_diff)/sum(psd_diff),<span class="string">'k'</span>,<span class="string">'LineWidth'</span>,2);
+xlabel(<span class="string">'frequency (relative to line)'</span>);
+ylabel(<span class="string">'relative power'</span>); subplot(2,1,2);
+title(<span class="string">'PDS difference'</span>); grid <span class="string">on</span>
+
+<span class="comment">% we are using the results from ZapLine here</span>
+clear <span class="string">EEG</span>; EEG = Power_cleanEEG; clear <span class="string">Power_cleanEEG</span>
+</pre><pre class="codeoutput">
+NoiseTools, version 18-Feb-2020
+http://audition.ens.fr/adc/NoiseTools
+Please cite relevant methods papers.
+
+
+nfft =
+
+        1024
+
+pop_spectopo(): selecting time range   0.00 ms to 743000.00 ms (points 1 to 185751)
+Pop_spectopo: finding data discontinuities
+Selecting the first 15.0% of data for analysis...
+Click on each trace for channel/component index
+
+nfft =
+
+        1024
+
+pop_spectopo(): selecting time range   0.00 ms to 743000.00 ms (points 1 to 185751)
+Pop_spectopo: finding data discontinuities
+Selecting the first 15.0% of data for analysis...
+Click on each trace for channel/component index
+
+nfft =
+
+        1024
+
+pop_spectopo(): selecting time range   0.00 ms to 743000.00 ms (points 1 to 185751)
+Pop_spectopo: finding data discontinuities
+Selecting the first 15.0% of data for analysis...
+Click on each trace for channel/component index
+proportion of non-DC power removed 0.0177047
+:</pre><img vspace="5" hspace="5" src="effect_of_preprocessing_06.png" alt=""> <img vspace="5" hspace="5" src="effect_of_preprocessing_07.png" alt=""> <h2 id="5">Let's look at the effect of high-pass and low-pass filters on artefacts</h2><p>We will filter using default parameters from EEGLab, compute ICA and use IClabel to classify artefacts.</p><pre class="codeinput">IClabel_selection = repmat([0.8 1],7,1); <span class="comment">% prob. [80% 100%]</span>
+IClabel_selection(1,:) = NaN;            <span class="comment">% do not flag brain</span>
+
+<span class="comment">% The recommendation for ERP is a high-pass filter between 0.01 to 0.05Hz</span>
+<span class="comment">% and no low-pass filter</span>
+
+<span class="keyword">if</span> ~exist(<span class="string">'all_filtICA.mat'</span>,<span class="string">'file'</span>)
+    <span class="comment">% _passband edge 0.02Hz (cut-off 0.01 hz) no low-pass_</span>
+    EEG_002hz         = pop_eegfiltnew(EEG,0.02,0);
+    EEG_ica_002hz     = pop_runica(EEG_002hz, <span class="string">'icatype'</span>, <span class="string">'runica'</span>, <span class="string">'concatcond'</span>,<span class="string">'on'</span>,<span class="keyword">...</span>
+        <span class="string">'extended'</span>,1,<span class="string">'interrupt'</span>,<span class="string">'on'</span>,<span class="string">'reorder'</span>,<span class="string">'on'</span>,<span class="string">'options'</span>,{<span class="string">'pca'</span>,EEG.nbchan-1});
+
+    <span class="comment">% _lets' see what is happening adding a low_pass 39Hz (cut-off 43 hz)_</span>
+    EEG_002hz_39hz         = pop_eegfiltnew(EEG_002hz,0,39);
+    EEG_ica_002hz_39hz     = pop_runica(EEG_002hz_39hz, <span class="string">'icatype'</span>, <span class="string">'runica'</span>, <span class="string">'concatcond'</span>,<span class="string">'on'</span>,<span class="keyword">...</span>
+        <span class="string">'extended'</span>,1,<span class="string">'interrupt'</span>,<span class="string">'on'</span>,<span class="string">'reorder'</span>,<span class="string">'on'</span>,<span class="string">'options'</span>,{<span class="string">'pca'</span>,EEG.nbchan-1});
+<span class="keyword">else</span>
+    load(<span class="string">'all_filtICA.mat'</span>); <span class="comment">% all the EEG* with ica (from below as well)</span>
+<span class="keyword">end</span>
+
+<span class="comment">% compute classification and plot IC with labels</span>
+EEG_ica_002hz_ICL = iclabel(EEG_ica_002hz);
+pop_viewprops(EEG_ica_002hz_ICL,0,1:20);
+set(gcf,<span class="string">'color'</span>,<span class="string">'w'</span>,<span class="string">'Colormap'</span>,diverging_bwr);
+pop_prop_extended(EEG_ica_002hz_ICL,0,1)
+set(gcf,<span class="string">'color'</span>,<span class="string">'w'</span>,<span class="string">'Colormap'</span>,diverging_bwr);
+</pre><pre class="codeoutput">ICLabel: extracting features...
+ICLabel: calculating labels...
+ICLabel: saving results...
+Drawing figure...
+More than 64 electrodes: electrode locations not shown
+Using sampling rate 1000 Hz.
+Plotting input data as 200 epochs of 3715 frames sampled at 1000.0 Hz.
+Sorting data on input sortvar.
+100.00% of the trials (i.e., 200 out of 200) have the same sortvar value as at least one other trial.
+Distribution of number ties per unique value of sortvar:
+Min: 200, 25th ptile: 200, Median: 200, 75th ptile: 200, Max: 200
+
+Smoothing the sorted epochs with a 3-epoch moving window.
+  and a decimation factor of 1
+The caxis range will be 0.666667 times the sym. abs. data range -&gt; [-138.444,138.444].
+Data will be plotted between 0 and 3714 ms.
+Output data will be 3715 frames by 198 smoothed trials.
+Outtrials: 2.50 to 199.50
+Not all sortvar values within time vector limits:
+        outliers will be shown at nearest limit.
+Overplotting sorted sortvar on data.
+Done.
+
+Computing spectra (window length 250; fft length: 250; overlap 0):
+.Scaling spectrum by component RMS of scalp map power
+
+Click on each trace for channel/component index
+
+ans =
+
+  Figure (9: IC1 - pop_prop_extended()) with properties:
+
+      Number: 9
+        Name: 'IC1 - pop_prop_extended()'
+       Color: [0.9300 0.9600 1]
+    Position: [-280 -82 1200 699.6667]
+       Units: 'pixels'
+
+  Use GET to show all properties
+
+</pre><img vspace="5" hspace="5" src="effect_of_preprocessing_08.png" alt=""> <img vspace="5" hspace="5" src="effect_of_preprocessing_09.png" alt=""> <p>if we are happy with this result, the clean data are</p><pre class="codeinput">EEG_ica_002hz_ICL_clean = pop_icflag(EEG_ica_002hz_ICL,IClabel_selection);
+EEG_ica_002hz_ICL_clean = pop_subcomp(EEG_ica_002hz_ICL_clean, <span class="keyword">...</span>
+    find(EEG_ica_002hz_ICL_clean.reject.gcompreject), 0);
+
+<span class="comment">% redo with low-pass filtered data</span>
+EEG_ica_002hz_39hz_ICL = iclabel(EEG_ica_002hz_39hz);
+pop_viewprops(EEG_ica_002hz_39hz_ICL,0,1:20);
+set(gcf,<span class="string">'color'</span>,<span class="string">'w'</span>,<span class="string">'Colormap'</span>,diverging_bwr);
+pop_prop_extended(EEG_ica_002hz_ICL,0,1)
+set(gcf,<span class="string">'color'</span>,<span class="string">'w'</span>,<span class="string">'Colormap'</span>,diverging_bwr);
+
+<span class="comment">% _what can be said of using low-pass in ICA and labelling?_</span>
+</pre><pre class="codeoutput">25 components rejected
+Computing projection ....
+ICLabel: extracting features...
+ICLabel: calculating labels...
+ICLabel: saving results...
+Drawing figure...
+More than 64 electrodes: electrode locations not shown
+Using sampling rate 1000 Hz.
+Plotting input data as 200 epochs of 3715 frames sampled at 1000.0 Hz.
+Sorting data on input sortvar.
+100.00% of the trials (i.e., 200 out of 200) have the same sortvar value as at least one other trial.
+Distribution of number ties per unique value of sortvar:
+Min: 200, 25th ptile: 200, Median: 200, 75th ptile: 200, Max: 200
+
+Smoothing the sorted epochs with a 3-epoch moving window.
+  and a decimation factor of 1
+The caxis range will be 0.666667 times the sym. abs. data range -&gt; [-138.444,138.444].
+Data will be plotted between 0 and 3714 ms.
+Output data will be 3715 frames by 198 smoothed trials.
+Outtrials: 2.50 to 199.50
+Not all sortvar values within time vector limits:
+        outliers will be shown at nearest limit.
+Overplotting sorted sortvar on data.
+Done.
+
+Computing spectra (window length 250; fft length: 250; overlap 0):
+.Scaling spectrum by component RMS of scalp map power
+
+Click on each trace for channel/component index
+
+ans =
+
+  Figure (11: IC1 - pop_prop_extended()) with properties:
+
+      Number: 11
+        Name: 'IC1 - pop_prop_extended()'
+       Color: [0.9300 0.9600 1]
+    Position: [-280 -82 1200 699.6667]
+       Units: 'pixels'
+
+  Use GET to show all properties
+
+</pre><img vspace="5" hspace="5" src="effect_of_preprocessing_10.png" alt=""> <img vspace="5" hspace="5" src="effect_of_preprocessing_11.png" alt=""> <p><i>Let's test different filters</i></p><pre class="codeinput"><span class="keyword">if</span> ~exist(<span class="string">'all_filtICA.mat'</span>,<span class="string">'file'</span>)
+    <span class="comment">% high-pass filter passband edge 1hz (cut-off 0.5 hz) no low-pass</span>
+    EEG_1hz = pop_eegfiltnew(EEG,1,0);
+    EEG_ica_1hz  = pop_runica(EEG_1hz, <span class="string">'icatype'</span>, <span class="string">'runica'</span>, <span class="string">'concatcond'</span>,<span class="string">'on'</span>,<span class="keyword">...</span>
+        <span class="string">'extended'</span>,1,<span class="string">'interrupt'</span>,<span class="string">'on'</span>,<span class="string">'reorder'</span>,<span class="string">'on'</span>,<span class="string">'options'</span>,{<span class="string">'pca'</span>,EEG.nbchan-1});
+
+    <span class="comment">% add low_pass 39Hz (cut-off 43 hz)</span>
+    EEG_1hz_39hz      = pop_eegfiltnew(EEG_1hz,0,39);
+    EEG_ica_1hz_39hz  = pop_runica(EEG_1hz_39hz, <span class="string">'icatype'</span>, <span class="string">'runica'</span>, <span class="string">'concatcond'</span>,<span class="string">'on'</span>,<span class="keyword">...</span>
+        <span class="string">'extended'</span>,1,<span class="string">'interrupt'</span>,<span class="string">'on'</span>,<span class="string">'reorder'</span>,<span class="string">'on'</span>,<span class="string">'options'</span>,{<span class="string">'pca'</span>,EEG.nbchan-1});
+
+    <span class="comment">% high_pass filter passband edge 3Hz (cut-off 2 hz) no low-pass</span>
+    EEG_2hz      = pop_eegfiltnew(EEG,3,0);
+    EEG_ica_2hz  = pop_runica(EEG_2hz, <span class="string">'icatype'</span>, <span class="string">'runica'</span>, <span class="string">'concatcond'</span>,<span class="string">'on'</span>,<span class="keyword">...</span>
+        <span class="string">'extended'</span>,1,<span class="string">'interrupt'</span>,<span class="string">'on'</span>,<span class="string">'reorder'</span>,<span class="string">'on'</span>,<span class="string">'options'</span>,{<span class="string">'pca'</span>,EEG.nbchan-1});
+
+    <span class="comment">% add low_pass 39Hz (cut-off 43 hz)</span>
+    EEG_2hz_39hz      = pop_eegfiltnew(EEG_2hz,0,39);
+    EEG_ica_2hz_39hz  = pop_runica(EEG_2hz_39hz, <span class="string">'icatype'</span>, <span class="string">'runica'</span>, <span class="string">'concatcond'</span>,<span class="string">'on'</span>,<span class="keyword">...</span>
+        <span class="string">'extended'</span>,1,<span class="string">'interrupt'</span>,<span class="string">'on'</span>,<span class="string">'reorder'</span>,<span class="string">'on'</span>,<span class="string">'options'</span>,{<span class="string">'pca'</span>,EEG.nbchan-1});
+
+    <span class="comment">% save all that computational time for next time we want to run the tutorial</span>
+    save <span class="string">all_filtICA</span> <span class="string">-v7.3</span>
+<span class="keyword">end</span>
+
+<span class="comment">% classify and make figures of the different filtered version</span>
+EEG_ica_1hz_ICL = iclabel(EEG_ica_1hz);
+pop_viewprops(EEG_ica_1hz_ICL,0,1:20);
+set(gcf,<span class="string">'color'</span>,<span class="string">'w'</span>,<span class="string">'Colormap'</span>,diverging_bwr);
+EEG_ica_1hz_39hz_ICL = iclabel(EEG_ica_1hz_39hz);
+pop_viewprops(EEG_ica_1hz_39hz_ICL,0,1:20);
+set(gcf,<span class="string">'color'</span>,<span class="string">'w'</span>,<span class="string">'Colormap'</span>,diverging_bwr);
+EEG_ica_2hz_ICL = iclabel(EEG_ica_2hz);
+pop_viewprops(EEG_ica_2hz_ICL,0,1:20);
+set(gcf,<span class="string">'color'</span>,<span class="string">'w'</span>,<span class="string">'Colormap'</span>,diverging_bwr);
+pop_prop_extended(EEG_ica_2hz_ICL,0,1)
+set(gcf,<span class="string">'color'</span>,<span class="string">'w'</span>,<span class="string">'Colormap'</span>,diverging_bwr);
+EEG_ica_2hz_39hz_ICL = iclabel(EEG_ica_2hz_39hz);
+pop_viewprops(EEG_ica_2hz_39hz_ICL,0,1:20);
+set(gcf,<span class="string">'color'</span>,<span class="string">'w'</span>,<span class="string">'Colormap'</span>,diverging_bwr);
+</pre><pre class="codeoutput">ICLabel: extracting features...
+ICLabel: calculating labels...
+ICLabel: saving results...
+Drawing figure...
+More than 64 electrodes: electrode locations not shown
+ICLabel: extracting features...
+ICLabel: calculating labels...
+ICLabel: saving results...
+Drawing figure...
+More than 64 electrodes: electrode locations not shown
+ICLabel: extracting features...
+ICLabel: calculating labels...
+ICLabel: saving results...
+Drawing figure...
+More than 64 electrodes: electrode locations not shown
+Using sampling rate 1000 Hz.
+Plotting input data as 200 epochs of 3715 frames sampled at 1000.0 Hz.
+Sorting data on input sortvar.
+100.00% of the trials (i.e., 200 out of 200) have the same sortvar value as at least one other trial.
+Distribution of number ties per unique value of sortvar:
+Min: 200, 25th ptile: 200, Median: 200, 75th ptile: 200, Max: 200
+
+Smoothing the sorted epochs with a 3-epoch moving window.
+  and a decimation factor of 1
+The caxis range will be 0.666667 times the sym. abs. data range -&gt; [-23.2269,23.2269].
+Data will be plotted between 0 and 3714 ms.
+Output data will be 3715 frames by 198 smoothed trials.
+Outtrials: 2.50 to 199.50
+Not all sortvar values within time vector limits:
+        outliers will be shown at nearest limit.
+Overplotting sorted sortvar on data.
+Done.
+
+Computing spectra (window length 250; fft length: 250; overlap 0):
+.Scaling spectrum by component RMS of scalp map power
+
+Click on each trace for channel/component index
+
+ans =
+
+  Figure (15: IC1 - pop_prop_extended()) with properties:
+
+      Number: 15
+        Name: 'IC1 - pop_prop_extended()'
+       Color: [0.9300 0.9600 1]
+    Position: [-280 -82 1200 699.6667]
+       Units: 'pixels'
+
+  Use GET to show all properties
+
+ICLabel: extracting features...
+ICLabel: calculating labels...
+ICLabel: saving results...
+Drawing figure...
+More than 64 electrodes: electrode locations not shown
+</pre><img vspace="5" hspace="5" src="effect_of_preprocessing_12.png" alt=""> <img vspace="5" hspace="5" src="effect_of_preprocessing_13.png" alt=""> <img vspace="5" hspace="5" src="effect_of_preprocessing_14.png" alt=""> <img vspace="5" hspace="5" src="effect_of_preprocessing_15.png" alt=""> <img vspace="5" hspace="5" src="effect_of_preprocessing_16.png" alt=""> <h2 id="8">Temporary filtering</h2><p><b>We can see that low frequency have more weights on ICA</b> The 1st component for filtered data at 0.01Hz is classified as 'others' with a power spectrum around 0, although it still have some 'brain' class associated to it. ICA/IClabel seem to work best with at least 1Hz filter, possibly adding a low-pass at 40Hz. At the same time, we want data filtered at 0.05Hz. A solution is temporary filtering, that is filter the data at say 2Hz/40Hz, compute ICA and labelling. We can then remove the artefacts, i.e. components identified as such and backproject onto the 0.01Hz we want.</p><pre class="codeinput"><span class="comment">% we use  for backprojection of ICA weight matrix and ICA sphere matrix</span>
+EEG_ica_2hz_39hz  = keepICA(EEG_ica_2hz_39hz);
+EEG_ica_bpr_002hz = ica_foreign_backproject(EEG_002hz,EEG_ica_2hz_39hz);
+
+<span class="comment">% let's see what IClabel has to say about the back projection</span>
+<span class="comment">% the low frequency component is gone (unsurprizingly)</span>
+EEG_ica_bpr_002hz_ICL = iclabel(EEG_ica_bpr_002hz);
+pop_viewprops(EEG_ica_bpr_002hz_ICL,0,1:20);
+set(gcf,<span class="string">'color'</span>,<span class="string">'w'</span>,<span class="string">'Colormap'</span>,diverging_bwr);
+
+<span class="comment">% automatically keep Brain components</span>
+EEG_ica_bpr_002hz_ICL_clean = pop_icflag(EEG_ica_bpr_002hz_ICL, IClabel_selection);
+EEG_ica_bpr_002hz_ICL_clean = pop_subcomp(EEG_ica_bpr_002hz_ICL_clean,<span class="keyword">...</span>
+    find(EEG_ica_bpr_002hz_ICL_clean.reject.gcompreject) , 0);
+
+<span class="comment">% Sanity check</span>
+<span class="comment">% we computed ICA for data at 0.2Hz/40Hz, back projected for the 0.01Hz</span>
+<span class="comment">% filtered data - re-ran IClabel, flag brain components, and projected them</span>
+<span class="comment">% onto the scalp creating a clean dataset. All components should now be</span>
+<span class="comment">% brain</span>
+
+pop_prop_extended(EEG_ica_bpr_002hz_ICL_clean, 0, 1:10)
+</pre><pre class="codeoutput">eeg_checkset: recomputing the ICA activation matrix ...
+ICLabel: extracting features...
+ICLabel: calculating labels...
+ICLabel: saving results...
+Drawing figure...
+More than 64 electrodes: electrode locations not shown
+25 components rejected
+Computing projection ....
+Using sampling rate 1000 Hz.
+Plotting input data as 200 epochs of 3715 frames sampled at 1000.0 Hz.
+Sorting data on input sortvar.
+100.00% of the trials (i.e., 200 out of 200) have the same sortvar value as at least one other trial.
+Distribution of number ties per unique value of sortvar:
+Min: 200, 25th ptile: 200, Median: 200, 75th ptile: 200, Max: 200
+
+Smoothing the sorted epochs with a 3-epoch moving window.
+  and a decimation factor of 1
+The caxis range will be 0.666667 times the sym. abs. data range -&gt; [-21.1269,21.1269].
+Data will be plotted between 0 and 3714 ms.
+Output data will be 3715 frames by 198 smoothed trials.
+Outtrials: 2.50 to 199.50
+Not all sortvar values within time vector limits:
+        outliers will be shown at nearest limit.
+Overplotting sorted sortvar on data.
+Done.
+
+Computing spectra (window length 250; fft length: 250; overlap 0):
+.Scaling spectrum by component RMS of scalp map power
+
+Click on each trace for channel/component index
+Using sampling rate 1000 Hz.
+Plotting input data as 200 epochs of 3715 frames sampled at 1000.0 Hz.
+Sorting data on input sortvar.
+100.00% of the trials (i.e., 200 out of 200) have the same sortvar value as at least one other trial.
+Distribution of number ties per unique value of sortvar:
+Min: 200, 25th ptile: 200, Median: 200, 75th ptile: 200, Max: 200
+
+Smoothing the sorted epochs with a 3-epoch moving window.
+  and a decimation factor of 1
+The caxis range will be 0.666667 times the sym. abs. data range -&gt; [-13.9205,13.9205].
+Data will be plotted between 0 and 3714 ms.
+Output data will be 3715 frames by 198 smoothed trials.
+Outtrials: 2.50 to 199.50
+Not all sortvar values within time vector limits:
+        outliers will be shown at nearest limit.
+Overplotting sorted sortvar on data.
+Done.
+
+Computing spectra (window length 250; fft length: 250; overlap 0):
+.Scaling spectrum by component RMS of scalp map power
+
+Click on each trace for channel/component index
+Using sampling rate 1000 Hz.
+Plotting input data as 200 epochs of 3715 frames sampled at 1000.0 Hz.
+Sorting data on input sortvar.
+100.00% of the trials (i.e., 200 out of 200) have the same sortvar value as at least one other trial.
+Distribution of number ties per unique value of sortvar:
+Min: 200, 25th ptile: 200, Median: 200, 75th ptile: 200, Max: 200
+
+Smoothing the sorted epochs with a 3-epoch moving window.
+  and a decimation factor of 1
+The caxis range will be 0.666667 times the sym. abs. data range -&gt; [-10.1437,10.1437].
+Data will be plotted between 0 and 3714 ms.
+Output data will be 3715 frames by 198 smoothed trials.
+Outtrials: 2.50 to 199.50
+Not all sortvar values within time vector limits:
+        outliers will be shown at nearest limit.
+Overplotting sorted sortvar on data.
+Done.
+
+Computing spectra (window length 250; fft length: 250; overlap 0):
+.Scaling spectrum by component RMS of scalp map power
+
+Click on each trace for channel/component index
+Using sampling rate 1000 Hz.
+Plotting input data as 200 epochs of 3715 frames sampled at 1000.0 Hz.
+Sorting data on input sortvar.
+100.00% of the trials (i.e., 200 out of 200) have the same sortvar value as at least one other trial.
+Distribution of number ties per unique value of sortvar:
+Min: 200, 25th ptile: 200, Median: 200, 75th ptile: 200, Max: 200
+
+Smoothing the sorted epochs with a 3-epoch moving window.
+  and a decimation factor of 1
+The caxis range will be 0.666667 times the sym. abs. data range -&gt; [-11.979,11.979].
+Data will be plotted between 0 and 3714 ms.
+Output data will be 3715 frames by 198 smoothed trials.
+Outtrials: 2.50 to 199.50
+Not all sortvar values within time vector limits:
+        outliers will be shown at nearest limit.
+Overplotting sorted sortvar on data.
+Done.
+
+Computing spectra (window length 250; fft length: 250; overlap 0):
+.Scaling spectrum by component RMS of scalp map power
+
+Click on each trace for channel/component index
+Using sampling rate 1000 Hz.
+Plotting input data as 200 epochs of 3715 frames sampled at 1000.0 Hz.
+Sorting data on input sortvar.
+100.00% of the trials (i.e., 200 out of 200) have the same sortvar value as at least one other trial.
+Distribution of number ties per unique value of sortvar:
+Min: 200, 25th ptile: 200, Median: 200, 75th ptile: 200, Max: 200
+
+Smoothing the sorted epochs with a 3-epoch moving window.
+  and a decimation factor of 1
+The caxis range will be 0.666667 times the sym. abs. data range -&gt; [-9.5287,9.5287].
+Data will be plotted between 0 and 3714 ms.
+Output data will be 3715 frames by 198 smoothed trials.
+Outtrials: 2.50 to 199.50
+Not all sortvar values within time vector limits:
+        outliers will be shown at nearest limit.
+Overplotting sorted sortvar on data.
+Done.
+
+Computing spectra (window length 250; fft length: 250; overlap 0):
+.Scaling spectrum by component RMS of scalp map power
+
+Click on each trace for channel/component index
+Using sampling rate 1000 Hz.
+Plotting input data as 200 epochs of 3715 frames sampled at 1000.0 Hz.
+Sorting data on input sortvar.
+100.00% of the trials (i.e., 200 out of 200) have the same sortvar value as at least one other trial.
+Distribution of number ties per unique value of sortvar:
+Min: 200, 25th ptile: 200, Median: 200, 75th ptile: 200, Max: 200
+
+Smoothing the sorted epochs with a 3-epoch moving window.
+  and a decimation factor of 1
+The caxis range will be 0.666667 times the sym. abs. data range -&gt; [-15.3887,15.3887].
+Data will be plotted between 0 and 3714 ms.
+Output data will be 3715 frames by 198 smoothed trials.
+Outtrials: 2.50 to 199.50
+Not all sortvar values within time vector limits:
+        outliers will be shown at nearest limit.
+Overplotting sorted sortvar on data.
+Done.
+
+Computing spectra (window length 250; fft length: 250; overlap 0):
+.Scaling spectrum by component RMS of scalp map power
+
+Click on each trace for channel/component index
+Using sampling rate 1000 Hz.
+Plotting input data as 200 epochs of 3715 frames sampled at 1000.0 Hz.
+Sorting data on input sortvar.
+100.00% of the trials (i.e., 200 out of 200) have the same sortvar value as at least one other trial.
+Distribution of number ties per unique value of sortvar:
+Min: 200, 25th ptile: 200, Median: 200, 75th ptile: 200, Max: 200
+
+Smoothing the sorted epochs with a 3-epoch moving window.
+  and a decimation factor of 1
+The caxis range will be 0.666667 times the sym. abs. data range -&gt; [-8.91176,8.91176].
+Data will be plotted between 0 and 3714 ms.
+Output data will be 3715 frames by 198 smoothed trials.
+Outtrials: 2.50 to 199.50
+Not all sortvar values within time vector limits:
+        outliers will be shown at nearest limit.
+Overplotting sorted sortvar on data.
+Done.
+
+Computing spectra (window length 250; fft length: 250; overlap 0):
+.Scaling spectrum by component RMS of scalp map power
+
+Click on each trace for channel/component index
+Using sampling rate 1000 Hz.
+Plotting input data as 200 epochs of 3715 frames sampled at 1000.0 Hz.
+Sorting data on input sortvar.
+100.00% of the trials (i.e., 200 out of 200) have the same sortvar value as at least one other trial.
+Distribution of number ties per unique value of sortvar:
+Min: 200, 25th ptile: 200, Median: 200, 75th ptile: 200, Max: 200
+
+Smoothing the sorted epochs with a 3-epoch moving window.
+  and a decimation factor of 1
+The caxis range will be 0.666667 times the sym. abs. data range -&gt; [-12.5084,12.5084].
+Data will be plotted between 0 and 3714 ms.
+Output data will be 3715 frames by 198 smoothed trials.
+Outtrials: 2.50 to 199.50
+Not all sortvar values within time vector limits:
+        outliers will be shown at nearest limit.
+Overplotting sorted sortvar on data.
+Done.
+
+Computing spectra (window length 250; fft length: 250; overlap 0):
+.Scaling spectrum by component RMS of scalp map power
+
+Click on each trace for channel/component index
+Using sampling rate 1000 Hz.
+Plotting input data as 200 epochs of 3715 frames sampled at 1000.0 Hz.
+Sorting data on input sortvar.
+100.00% of the trials (i.e., 200 out of 200) have the same sortvar value as at least one other trial.
+Distribution of number ties per unique value of sortvar:
+Min: 200, 25th ptile: 200, Median: 200, 75th ptile: 200, Max: 200
+
+Smoothing the sorted epochs with a 3-epoch moving window.
+  and a decimation factor of 1
+The caxis range will be 0.666667 times the sym. abs. data range -&gt; [-85.2012,85.2012].
+Data will be plotted between 0 and 3714 ms.
+Output data will be 3715 frames by 198 smoothed trials.
+Outtrials: 2.50 to 199.50
+Not all sortvar values within time vector limits:
+        outliers will be shown at nearest limit.
+Overplotting sorted sortvar on data.
+Done.
+
+Computing spectra (window length 250; fft length: 250; overlap 0):
+.Scaling spectrum by component RMS of scalp map power
+
+Click on each trace for channel/component index
+Using sampling rate 1000 Hz.
+Plotting input data as 200 epochs of 3715 frames sampled at 1000.0 Hz.
+Sorting data on input sortvar.
+100.00% of the trials (i.e., 200 out of 200) have the same sortvar value as at least one other trial.
+Distribution of number ties per unique value of sortvar:
+Min: 200, 25th ptile: 200, Median: 200, 75th ptile: 200, Max: 200
+
+Smoothing the sorted epochs with a 3-epoch moving window.
+  and a decimation factor of 1
+The caxis range will be 0.666667 times the sym. abs. data range -&gt; [-9.235,9.235].
+Data will be plotted between 0 and 3714 ms.
+Output data will be 3715 frames by 198 smoothed trials.
+Outtrials: 2.50 to 199.50
+Not all sortvar values within time vector limits:
+        outliers will be shown at nearest limit.
+Overplotting sorted sortvar on data.
+Done.
+
+Computing spectra (window length 250; fft length: 250; overlap 0):
+.Scaling spectrum by component RMS of scalp map power
+
+Click on each trace for channel/component index
+</pre><img vspace="5" hspace="5" src="effect_of_preprocessing_17.png" alt=""> <img vspace="5" hspace="5" src="effect_of_preprocessing_18.png" alt=""> <img vspace="5" hspace="5" src="effect_of_preprocessing_19.png" alt=""> <img vspace="5" hspace="5" src="effect_of_preprocessing_20.png" alt=""> <img vspace="5" hspace="5" src="effect_of_preprocessing_21.png" alt=""> <img vspace="5" hspace="5" src="effect_of_preprocessing_22.png" alt=""> <img vspace="5" hspace="5" src="effect_of_preprocessing_23.png" alt=""> <img vspace="5" hspace="5" src="effect_of_preprocessing_24.png" alt=""> <img vspace="5" hspace="5" src="effect_of_preprocessing_25.png" alt=""> <img vspace="5" hspace="5" src="effect_of_preprocessing_26.png" alt=""> <img vspace="5" hspace="5" src="effect_of_preprocessing_27.png" alt=""> <h2 id="9">Re-referencing</h2><p>we have now two clean datasets, EEG_ica_002hz_ICL_clean and EEG_ica_bpr_002hz_ICL_clean which have the power line removed with ZapLine, then filtered at 0.01Hz (0.02Hz bound) and artefacts removed using IClabel ; directly from the 0.01Hz data or using labeling of the 2Hz/40Hz filtered data. We can now re-reference, we will use the common average refrence and rest.</p><pre class="codeinput">EEG_ica_002hz_ICL_clean_ca     = pop_reref(EEG_ica_002hz_ICL_clean,[],<span class="string">'interpchan'</span>,[]);
+EEG_ica_bpr_002hz_ICL_clean_ca = pop_reref(EEG_ica_bpr_002hz_ICL_clean,[],<span class="string">'interpchan'</span>,[]);
+
+<span class="comment">% REST parameters</span>
+channel_locs = cell2mat(arrayfun(@(x) [x.X x.Y x.Z],EEG.chanlocs,<span class="string">'UniformOutput'</span>,false));
+xyz_dipoles  = load(fullfile(fileparts(which(<span class="string">'pop_REST_reref.m'</span>)),<span class="string">'corti869-3000dipoles.dat'</span>));
+<span class="comment">% Calculate the dipole orientations.</span>
+xyz_dipOri = bsxfun ( @rdivide, xyz_dipoles, sqrt ( sum ( xyz_dipoles .^ 2, 2 ) ) );
+xyz_dipOri ( 2601: 3000, 1 ) = 0;
+xyz_dipOri ( 2601: 3000, 2 ) = 0;
+xyz_dipOri ( 2601: 3000, 3 ) = 1;
+<span class="comment">% define headmodel</span>
+headmodel        = [];
+headmodel.type   = <span class="string">'concentricspheres'</span>;
+headmodel.o      = [ 0.0000 0.0000 0.0000 ];
+headmodel.r      = [ 0.8700,0.9200,1];
+headmodel.cond   = [ 1.0000,0.0125,1];
+headmodel.tissue = { <span class="string">'brain'</span> <span class="string">'skull'</span> <span class="string">'scalp'</span> };
+<span class="comment">% calculate leadfield</span>
+[G,~] = dong_calc_leadfield3(channel_locs,xyz_dipoles,xyz_dipOri,headmodel);
+<span class="comment">% compute</span>
+EEG_ica_002hz_ICL_clean_rest          = EEG_ica_002hz_ICL_clean_ca;
+EEG_ica_002hz_ICL_clean_rest.data     = rest_refer(detrend(EEG_ica_002hz_ICL_clean_ca.data,<span class="string">'constant'</span>),G');
+EEG_ica_bpr_002hz_ICL_clean_rest      = EEG_ica_bpr_002hz_ICL_clean_ca;
+EEG_ica_bpr_002hz_ICL_clean_rest.data = rest_refer(detrend(EEG_ica_bpr_002hz_ICL_clean_ca.data,<span class="string">'constant'</span>),G');
+</pre><pre class="codeoutput">Interpolating 1 channels...
+eeg_checkset: recomputing the ICA activation matrix ...
+Re-referencing data
+Removing 1 channel(s)...
+Re-referencing ICA matrix
+Interpolating 1 channels...
+eeg_checkset: recomputing the ICA activation matrix ...
+Re-referencing data
+Removing 1 channel(s)...
+Re-referencing ICA matrix
+3 concentric spheres are used
+No. of electrodes: 69
+electrodes do not ly on sphere surface -&gt; using projection
+No. of diples: 3000
+some dipoles are not within sphere 1 -&gt; rescale xyz coordinates of all dipoles
+</pre><h2 id="10">Check ERPs and statistics</h2><pre class="codeinput"><span class="comment">% Epoch data, remove baseline</span>
+EEG_ica_002hz_ICL_clean_ca = pop_epoch(EEG_ica_002hz_ICL_clean_ca,<span class="keyword">...</span>
+    {<span class="string">'famous_new'</span>,<span class="string">'famous_second_early'</span>,<span class="string">'famous_second_late'</span>,<span class="keyword">...</span>
+    <span class="string">'scrambled_new'</span>,<span class="string">'scrambled_second_early'</span>,<span class="string">'scrambled_second_late'</span>,<span class="keyword">...</span>
+    <span class="string">'unfamiliar_new'</span>,<span class="string">'unfamiliar_second_early'</span>,<span class="string">'unfamiliar_second_late'</span>},<span class="keyword">...</span>
+    [-0.2 1] ,<span class="string">'epochinfo'</span>,<span class="string">'yes'</span>);
+pop_rmbase(EEG_ica_002hz_ICL_clean_ca,[-200 0]);
+EEG_ica_002hz_ICL_clean_ca = eeg_checkset(EEG_ica_002hz_ICL_clean_ca);
+
+EEG_ica_bpr_002hz_ICL_clean_ca = pop_epoch(EEG_ica_bpr_002hz_ICL_clean_ca,<span class="keyword">...</span>
+    {<span class="string">'famous_new'</span>,<span class="string">'famous_second_early'</span>,<span class="string">'famous_second_late'</span>,<span class="keyword">...</span>
+    <span class="string">'scrambled_new'</span>,<span class="string">'scrambled_second_early'</span>,<span class="string">'scrambled_second_late'</span>,<span class="keyword">...</span>
+    <span class="string">'unfamiliar_new'</span>,<span class="string">'unfamiliar_second_early'</span>,<span class="string">'unfamiliar_second_late'</span>},<span class="keyword">...</span>
+    [-0.2 1] ,<span class="string">'epochinfo'</span>,<span class="string">'yes'</span>);
+pop_rmbase(EEG_ica_bpr_002hz_ICL_clean_ca,[-200 0]);
+EEG_ica_bpr_002hz_ICL_clean_ca = eeg_checkset(EEG_ica_bpr_002hz_ICL_clean_ca);
+
+EEG_ica_002hz_ICL_clean_rest = pop_epoch(EEG_ica_002hz_ICL_clean_rest,<span class="keyword">...</span>
+    {<span class="string">'famous_new'</span>,<span class="string">'famous_second_early'</span>,<span class="string">'famous_second_late'</span>,<span class="keyword">...</span>
+    <span class="string">'scrambled_new'</span>,<span class="string">'scrambled_second_early'</span>,<span class="string">'scrambled_second_late'</span>,<span class="keyword">...</span>
+    <span class="string">'unfamiliar_new'</span>,<span class="string">'unfamiliar_second_early'</span>,<span class="string">'unfamiliar_second_late'</span>},<span class="keyword">...</span>
+    [-0.2 1] ,<span class="string">'epochinfo'</span>,<span class="string">'yes'</span>);
+pop_rmbase(EEG_ica_002hz_ICL_clean_rest,[-200 0]);
+EEG_ica_002hz_ICL_clean_rest = eeg_checkset(EEG_ica_002hz_ICL_clean_rest);
+
+EEG_ica_bpr_002hz_ICL_clean_rest = pop_epoch(EEG_ica_bpr_002hz_ICL_clean_rest,<span class="keyword">...</span>
+    {<span class="string">'famous_new'</span>,<span class="string">'famous_second_early'</span>,<span class="string">'famous_second_late'</span>,<span class="keyword">...</span>
+    <span class="string">'scrambled_new'</span>,<span class="string">'scrambled_second_early'</span>,<span class="string">'scrambled_second_late'</span>,<span class="keyword">...</span>
+    <span class="string">'unfamiliar_new'</span>,<span class="string">'unfamiliar_second_early'</span>,<span class="string">'unfamiliar_second_late'</span>},<span class="keyword">...</span>
+    [-0.2 1] ,<span class="string">'epochinfo'</span>,<span class="string">'yes'</span>);
+pop_rmbase(EEG_ica_bpr_002hz_ICL_clean_rest,[-200 0]);
+EEG_ica_bpr_002hz_ICL_clean_rest = eeg_checkset(EEG_ica_bpr_002hz_ICL_clean_rest);
+
+<span class="comment">% Compute whole scalp statistics using LIMO tools</span>
+<span class="comment">% 1st we find the different type of faces</span>
+<span class="comment">% 2nd create a design matrix X such Y = BX + e</span>
+<span class="comment">% 3rd estimate the face effect using the GLM</span>
+conditions = arrayfun(@(x) x.eventface_type{1},EEG_ica_002hz_ICL_clean_ca.epoch,<span class="keyword">...</span>
+    <span class="string">'UniformOutput'</span>,false);
+condition_names = unique(conditions);
+DesignMatrix = [zeros(length(conditions),3) ones(length(conditions),1)];
+<span class="keyword">for</span> c = 1:3
+    DesignMatrix(:,c) = cellfun(@(x) strcmp(x,condition_names{c}), conditions);
+<span class="keyword">end</span>
+
+<span class="comment">% let's illustrate differences on a channel</span>
+channel = 64;
+cl = [1 0 0; 0 1 0; 0 0 1];
+figure(<span class="string">'Name'</span>,<span class="string">'ERP channel 63'</span>);
+<span class="keyword">for</span> condition = 1:3
+    subplot(1,2,1);
+    plot(EEG_ica_002hz_ICL_clean_ca.times,<span class="keyword">...</span>
+        mean(squeeze(EEG_ica_002hz_ICL_clean_ca.data(channel,:,logical(DesignMatrix(:,condition)))),2),<span class="keyword">...</span>
+        <span class="string">'LineWidth'</span>,2,<span class="string">'Color'</span>,cl(condition,:));hold <span class="string">on</span>
+    plot(EEG_ica_002hz_ICL_clean_ca.times,<span class="keyword">...</span>
+        mean(squeeze(EEG_ica_002hz_ICL_clean_rest.data(channel,:,logical(DesignMatrix(:,condition)))),2),<span class="keyword">...</span>
+        <span class="string">'--'</span>,<span class="string">'LineWidth'</span>,2,<span class="string">'Color'</span>,cl(condition,:));
+    subplot(1,2,2);
+    plot(EEG_ica_002hz_ICL_clean_ca.times,<span class="keyword">...</span>
+        mean(squeeze(EEG_ica_bpr_002hz_ICL_clean_ca.data(channel,:,logical(DesignMatrix(:,condition)))),2),<span class="keyword">...</span>
+        <span class="string">'LineWidth'</span>,2,<span class="string">'Color'</span>,cl(condition,:));hold <span class="string">on</span>
+    plot(EEG_ica_002hz_ICL_clean_ca.times,<span class="keyword">...</span>
+        mean(squeeze(EEG_ica_bpr_002hz_ICL_clean_rest.data(channel,:,logical(DesignMatrix(:,condition)))),2),<span class="keyword">...</span>
+        <span class="string">'--'</span>,<span class="string">'LineWidth'</span>,2,<span class="string">'Color'</span>,cl(condition,:));
+<span class="keyword">end</span>
+subplot(1,2,1); title(<span class="string">'standard IClabel'</span>);grid <span class="string">on</span>; box <span class="string">on</span>
+subplot(1,2,2); title(<span class="string">'IClabel with temporary filtering'</span>);grid <span class="string">on</span>; box <span class="string">on</span>
+drawnow
+</pre><pre class="codeoutput">pop_epoch():884 epochs selected
+Epoching...
+pop_epoch():884 epochs generated
+Scaling components to RMS microvolt
+eeg_checkset: recomputing the ICA activation matrix ...
+pop_epoch(): checking epochs for data discontinuity
+pop_rmbase(): Removing baseline...
+pop_epoch():884 epochs selected
+Epoching...
+pop_epoch():884 epochs generated
+Scaling components to RMS microvolt
+eeg_checkset: recomputing the ICA activation matrix ...
+pop_epoch(): checking epochs for data discontinuity
+pop_rmbase(): Removing baseline...
+pop_epoch():884 epochs selected
+Epoching...
+pop_epoch():884 epochs generated
+Scaling components to RMS microvolt
+eeg_checkset: recomputing the ICA activation matrix ...
+pop_epoch(): checking epochs for data discontinuity
+pop_rmbase(): Removing baseline...
+pop_epoch():884 epochs selected
+Epoching...
+pop_epoch():884 epochs generated
+Scaling components to RMS microvolt
+eeg_checkset: recomputing the ICA activation matrix ...
+pop_epoch(): checking epochs for data discontinuity
+pop_rmbase(): Removing baseline...
+</pre><img vspace="5" hspace="5" src="effect_of_preprocessing_28.png" alt=""> <p>run GLM and F value and p-value maps</p><pre class="codeinput"><span class="keyword">for</span> channel = size(EEG_ica_002hz_ICL_clean_ca.data,1):-1:1
+    model = limo_glm(squeeze(EEG_ica_002hz_ICL_clean_ca.data(channel,:,:))',<span class="keyword">...</span>
+        DesignMatrix,3,0,0,<span class="string">'OLS'</span>,<span class="string">'Time'</span>,[],[]);
+    Fmap1(channel,:) = model.conditions.F;
+    Pmap1(channel,:) = model.conditions.p;
+    model = limo_glm(squeeze(EEG_ica_bpr_002hz_ICL_clean_ca.data(channel,:,:))',<span class="keyword">...</span>
+        DesignMatrix,3,0,0,<span class="string">'OLS'</span>,<span class="string">'Time'</span>,[],[]);
+    Fmap2(channel,:) = model.conditions.F;
+    Pmap2(channel,:) = model.conditions.p;
+    model = limo_glm(squeeze(EEG_ica_002hz_ICL_clean_rest.data(channel,:,:))',<span class="keyword">...</span>
+        DesignMatrix,3,0,0,<span class="string">'OLS'</span>,<span class="string">'Time'</span>,[],[]);
+    Fmap3(channel,:) = model.conditions.F;
+    Pmap3(channel,:) = model.conditions.p;
+    model = limo_glm(squeeze(EEG_ica_bpr_002hz_ICL_clean_rest.data(channel,:,:))',<span class="keyword">...</span>
+        DesignMatrix,3,0,0,<span class="string">'OLS'</span>,<span class="string">'Time'</span>,[],[]);
+    Fmap4(channel,:) = model.conditions.F;
+    Pmap4(channel,:) = model.conditions.p;
+<span class="keyword">end</span>
+
+
+<span class="comment">% we can also check across all channels</span>
+figure(<span class="string">'Name'</span>,<span class="string">'Stat results (uncorrected)'</span>)
+subplot(3,3,1);
+imagesc(EEG_ica_002hz_ICL_clean_ca.times,1:size(Fmap1,1),Fmap1.*(Pmap1&lt;.05));
+set(gcf,<span class="string">'color'</span>,<span class="string">'w'</span>,<span class="string">'Colormap'</span>,diverging_bwr(129:end,:));
+xlabel(<span class="string">'time (ms)'</span>); ylabel(<span class="string">'channels'</span>);
+title(<span class="string">'Face effect IC with Filter 0.01Hz Ref: common'</span>)
+subplot(3,3,2);
+imagesc(EEG_ica_002hz_ICL_clean_ca.times,1:size(Fmap2,1),Fmap2.*(Pmap2&lt;.05));
+set(gcf,<span class="string">'color'</span>,<span class="string">'w'</span>,<span class="string">'Colormap'</span>,diverging_bwr(129:end,:));
+xlabel(<span class="string">'time (ms)'</span>); ylabel(<span class="string">'channels'</span>);
+title(<span class="string">'Face effect IC with Filter 2Hz Ref: common'</span>)
+subplot(3,3,3);
+imagesc(EEG_ica_002hz_ICL_clean_ca.times,1:size(Fmap2,1),Pmap1-Pmap2)
+colormap(gca, diverging_bwr);
+xlabel(<span class="string">'time (ms)'</span>); ylabel(<span class="string">'channels'</span>);
+title(<span class="string">'p-value differences'</span>)
+
+subplot(3,3,4);
+imagesc(EEG_ica_002hz_ICL_clean_ca.times,1:size(Fmap3,1),Fmap3.*(Pmap3&lt;.05));
+set(gcf,<span class="string">'color'</span>,<span class="string">'w'</span>,<span class="string">'Colormap'</span>,diverging_bwr(129:end,:));
+xlabel(<span class="string">'time (ms)'</span>); ylabel(<span class="string">'channels'</span>);
+title(<span class="string">'Face effect IC with Filter 0.01Hz Ref: rest'</span>)
+subplot(3,3,5);
+imagesc(EEG_ica_002hz_ICL_clean_ca.times,1:size(Fmap4,1),Fmap4.*(Pmap4&lt;.05));
+set(gcf,<span class="string">'color'</span>,<span class="string">'w'</span>,<span class="string">'Colormap'</span>,diverging_bwr(129:end,:));
+xlabel(<span class="string">'time (ms)'</span>); ylabel(<span class="string">'channels'</span>);
+title(<span class="string">'Face effect IC with Filter 0.01Hz Ref: rest'</span>)
+subplot(3,3,6);
+imagesc(EEG_ica_002hz_ICL_clean_ca.times,1:size(Fmap3,1),Pmap3-Pmap4)
+colormap(gca, diverging_bwr);
+xlabel(<span class="string">'time (ms)'</span>); ylabel(<span class="string">'channels'</span>);
+title(<span class="string">'p-value differences'</span>)
+
+subplot(3,3,7);
+imagesc(EEG_ica_002hz_ICL_clean_ca.times,1:size(Fmap1,1),Pmap1-Pmap3)
+colormap(gca, diverging_bwr);
+xlabel(<span class="string">'time (ms)'</span>); ylabel(<span class="string">'channels'</span>);
+title(<span class="string">'p-value differences'</span>)
+subplot(3,3,8);
+imagesc(EEG_ica_002hz_ICL_clean_ca.times,1:size(Fmap2,1),Pmap2-Pmap4)
+colormap(gca, diverging_bwr);
+xlabel(<span class="string">'time (ms)'</span>); ylabel(<span class="string">'channels'</span>);
+title(<span class="string">'p-value differences'</span>)
+
+subplot(3,3,9);
+all = zeros(size(Fmap1,1),size(Fmap1,2),4);
+all(:,:,1) = Fmap1;
+all(:,:,2) = Fmap2;
+all(:,:,3) = Fmap3;
+all(:,:,4) = Fmap4;
+imagesc(EEG_ica_002hz_ICL_clean_ca.times,1:size(Fmap2,1),std(all,[],3))
+colormap(gca, diverging_bwr);
+xlabel(<span class="string">'time (ms)'</span>); ylabel(<span class="string">'channels'</span>);
+title(<span class="string">'F-values vibration (std among methods)'</span>)
+</pre><img vspace="5" hspace="5" src="effect_of_preprocessing_29.png" alt=""> <p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2020a</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% OHBM2020 EEG Preprocessing: not so basic after all
+%
+% *This script illustrate the effect of filtering, IC labeling and
+% referencing on statistical results.*
+% The data are taken from https://openneuro.org/datasets/ds002718/versions/1.0.2
+% We use here sub-011 only.
+% The code was writen by Cyril Pernet, reusing Nicolas Langers' code from
+% <https://osf.io/z8uqx/ OSF> and snippet from LI Dong.
+
+%% let's check the environement, files, etc
+
+clc
+clear variables
+current = pwd;  %% assuming we are in \code
+addpath([current filesep 'NT_tools']);
+addpath([current filesep 'local_functions']);
+
+% check all the tools we need are here
+if ~exist('eeglab.m','file')
+    error('eeglab is not in your matlab path')
+else
+    eeglab; % allows loading plugins
+end
+
+if ~exist('iclabel.m','file')
+    error('IClabewl plugin is missing, please install')
+end
+
+if ~exist('pop_viewprops.m','file')
+    error('ViewProps plugin is missing, please install')
+end
+
+if ~exist('rest_refer.m','file')
+    error('REST plugin is missing, please install')
+end
+
+if exist('limo_eeg.m','file')
+    root = fileparts(which('limo_eeg'));
+    addpath([root filesep 'limo_cluster_functions']);
+    addpath([root filesep 'external' filesep 'color_maps']);
+    diverging_bwr = load([root filesep 'external' filesep 'color_maps' filesep 'diverging_bwr.mat']);
+    diverging_bwr = diverging_bwr.dmap;
+else
+    error('LIMO tools plugin is missing, please install')
+end
+
+% locate the data
+datafolder = [fileparts(current) filesep 'data' filesep 'sub-011' filesep 'eeg'];
+if ~exist(fullfile(datafolder,'sub-011_task-FaceRecognition_eeg.set'),'file')
+    warndlg('Can''t locate the data - select the data file')
+    [datafile,datafolder] = uigetfile('*.set','select a subjects'' eeg file');
+    if isequal(datafile,0) || isempty(datafile,0)
+        disp('Selection cancelled'); return
+    else
+        datafile  = fullfile(datafolder, datafile);
+    end
+else
+    datafile = fullfile(datafolder,'sub-011_task-FaceRecognition_eeg.set');
+end
+
+%% we start by loading the data and removing EKG, HEOG, VEOG
+EEG = pop_loadset(datafile);
+EEG = pop_select(EEG, 'nochannel',{'EEG061','EEG062','EEG063','EEG064'});
+
+figure('Name','Raw data topography');
+subplot(1,2,1);
+topoplot(zscore(double(EEG.data(:,100))),EEG.chanlocs,'electrodes','off','colormap',diverging_bwr);
+title('Original file - data frame 100');subplot(1,2,2)
+pop_spectopo(EEG, 1, [0  size(EEG.data,2)],'EEG','percent',15,...
+    'freq',[6 10 22 50],'freqrange',[2 70],'electrodes','off');
+set(gcf,'Colormap',diverging_bwr);
+drawnow
+
+%% bad channel indentification
+% we use here cleanraw_data.m comparing results with or witout 1Hz temporary filter
+
+% create the copy and remove bad channels (includes a filter at 0.5Hz)
+EEG_badchan = EEG;
+EEG_badchan = pop_clean_rawdata(EEG_badchan,'FlatlineCriterion',5,'ChannelCriterion',0.8,...
+    'LineNoiseCriterion',4,'Highpass',[0.25 0.75] ,...
+    'BurstCriterion','off','WindowCriterion','off','BurstRejection','off',...
+    'Distance','Euclidian','WindowCriterionTolerances','off' );
+
+% Temporary highpass filter 1Hz
+EEGf_badchan = EEG;
+EEGf_badchan = pop_eegfiltnew(EEGf_badchan,1,0);
+EEGf_badchan = pop_clean_rawdata(EEGf_badchan,'FlatlineCriterion',5,'ChannelCriterion',0.8,...
+    'LineNoiseCriterion',4,'Highpass',[0.25 0.75] ,...
+    'BurstCriterion','off','WindowCriterion','off','BurstRejection','off',...
+    'Distance','Euclidian','WindowCriterionTolerances','off' );
+
+% visualize and compare results (new first, old second)
+vis_artifacts(EEG_badchan, EEG)
+vis_artifacts(EEGf_badchan, EEG)
+
+% find index of the retained channels and remove from original data
+tbl_channels = struct2table(EEGf_badchan.chanlocs);
+ind_retained = find(arrayfun(@(x)ismember(x.labels,tbl_channels.labels),EEG.chanlocs));
+ind_bad      = setdiff(1:size(EEG.chanlocs,1),ind_retained);
+EEG          = pop_select(EEG, 'nochannel',{EEG.chanlocs(ind_bad).labels});
+
+%% <https://www.sciencedirect.com/science/article/pii/S1053811919309474 Zapline> to remove Power line artifacts
+% Empirical tests showed that 7 components are required to sufficiently
+% remove the line noise - note the spatial distribution of PSD values stays
+% the same at the different frequencies, except a small change posteriorly
+% at the ~22Hz <https://en.wikipedia.org/wiki/Harmonic sub-harmonic> frequency
+
+% Notch filter (better not used) would be:
+% EEG = pop_eegfiltnew(EEG, 48,52,826,1,[],0);
+
+% test Zapline with different number of components:
+line_noise_freq = 50; % 50Hz line noise
+FLINE           = line_noise_freq/EEG.srate; % line frequency
+p.nfft          = 1024;
+ncomp           = [3 5 7];
+
+figure('Name','Power line removal - Zapline 3-5-7 components', ...
+    'units','normalized','outerposition',[0 0 1 1])
+for n = 3:-1:1
+    [clean, noise] = nt_zapline(EEG.data',FLINE,ncomp(n));
+    EEGzap{n}      = EEG;
+    EEGzap{n}.data = clean';
+    subplot(1,3,n);
+    pop_spectopo(EEGzap{n}, 1, [0  size(EEGzap{n}.data,2)],'EEG','percent',15,...
+        'freq', [6 10 22 line_noise_freq],'freqrange',[2 70],'electrodes','off');
+    set(gcf,'Colormap',diverging_bwr);
+end
+
+% Plot the the raw vs clean/removed signal (here for 7 components):
+
+Power_cleanEEG = EEGzap{3}; % this is the right data
+clear EEGzap                % clear up memory
+
+% Compute the PSD of each channel and add them (nt_dpect_plot computes
+% the Power Spectral Density estimate via <https://en.wikipedia.org/wiki/Welch%27s_method#:~:text=Welch's%20method%2C%20named%20after%20Peter,a%20signal%20at%20different%20frequencies. Welch's method>)
+% Note here the normalization by sqrt(mean(EEG.data(:)).^2), avg power of
+% the raw data
+fprintf('proportion of non-DC power removed %g\n:', ...
+    nt_wpwr(EEG.data-Power_cleanEEG.data)/nt_wpwr(nt_demean(EEG.data)));
+[psd_raw ,fr] = nt_spect_plot((EEG.data/sqrt(mean(EEG.data(:).^2)))',p.nfft,[],[],1/FLINE);
+[psd_zap ,fz] = nt_spect_plot((Power_cleanEEG.data/sqrt(mean(EEG.data(:).^2)))',p.nfft,[],[],1/FLINE);
+[psd_diff,fd] = nt_spect_plot(((EEG.data-Power_cleanEEG.data)/sqrt(mean(EEG.data(:).^2)))',p.nfft,[],[],1/FLINE);
+
+figure('Name','Raw vs Zapline corrected PSD');
+subplot(2,1,1); semilogy(fr,abs(psd_raw)/sum(psd_raw),'LineWidth',2);
+hold on; grid on; semilogy(fz,abs(psd_zap)/sum(psd_zap),'REPLACE_WITH_DASH_DASH','LineWidth',2);
+legend('raw','clean'); legend boxoff; title('raw vs clean')
+ylabel('relative power'); subplot(2,1,2);
+semilogy(fd,abs(psd_diff)/sum(psd_diff),'k','LineWidth',2);
+xlabel('frequency (relative to line)');
+ylabel('relative power'); subplot(2,1,2);
+title('PDS difference'); grid on
+
+% we are using the results from ZapLine here
+clear EEG; EEG = Power_cleanEEG; clear Power_cleanEEG
+
+%% Let's look at the effect of high-pass and low-pass filters on artefacts
+% We will filter using default parameters from EEGLab, compute ICA and use
+% IClabel to classify artefacts.
+
+IClabel_selection = repmat([0.8 1],7,1); % prob. [80% 100%]
+IClabel_selection(1,:) = NaN;            % do not flag brain
+
+% The recommendation for ERP is a high-pass filter between 0.01 to 0.05Hz
+% and no low-pass filter
+
+if ~exist('all_filtICA.mat','file')
+    % _passband edge 0.02Hz (cut-off 0.01 hz) no low-pass_
+    EEG_002hz         = pop_eegfiltnew(EEG,0.02,0);
+    EEG_ica_002hz     = pop_runica(EEG_002hz, 'icatype', 'runica', 'concatcond','on',...
+        'extended',1,'interrupt','on','reorder','on','options',{'pca',EEG.nbchan-1});
+
+    % _lets' see what is happening adding a low_pass 39Hz (cut-off 43 hz)_
+    EEG_002hz_39hz         = pop_eegfiltnew(EEG_002hz,0,39);
+    EEG_ica_002hz_39hz     = pop_runica(EEG_002hz_39hz, 'icatype', 'runica', 'concatcond','on',...
+        'extended',1,'interrupt','on','reorder','on','options',{'pca',EEG.nbchan-1});
+else
+    load('all_filtICA.mat'); % all the EEG* with ica (from below as well)
+end
+
+% compute classification and plot IC with labels
+EEG_ica_002hz_ICL = iclabel(EEG_ica_002hz);
+pop_viewprops(EEG_ica_002hz_ICL,0,1:20);
+set(gcf,'color','w','Colormap',diverging_bwr);
+pop_prop_extended(EEG_ica_002hz_ICL,0,1)
+set(gcf,'color','w','Colormap',diverging_bwr);
+
+%%
+% if we are happy with this result, the clean data are
+EEG_ica_002hz_ICL_clean = pop_icflag(EEG_ica_002hz_ICL,IClabel_selection);
+EEG_ica_002hz_ICL_clean = pop_subcomp(EEG_ica_002hz_ICL_clean, ...
+    find(EEG_ica_002hz_ICL_clean.reject.gcompreject), 0);
+
+% redo with low-pass filtered data
+EEG_ica_002hz_39hz_ICL = iclabel(EEG_ica_002hz_39hz);
+pop_viewprops(EEG_ica_002hz_39hz_ICL,0,1:20);
+set(gcf,'color','w','Colormap',diverging_bwr);
+pop_prop_extended(EEG_ica_002hz_ICL,0,1)
+set(gcf,'color','w','Colormap',diverging_bwr);
+
+% _what can be said of using low-pass in ICA and labelling?_
+
+
+%%
+% _Let's test different filters_
+if ~exist('all_filtICA.mat','file')
+    % high-pass filter passband edge 1hz (cut-off 0.5 hz) no low-pass
+    EEG_1hz = pop_eegfiltnew(EEG,1,0);
+    EEG_ica_1hz  = pop_runica(EEG_1hz, 'icatype', 'runica', 'concatcond','on',...
+        'extended',1,'interrupt','on','reorder','on','options',{'pca',EEG.nbchan-1});
+
+    % add low_pass 39Hz (cut-off 43 hz)
+    EEG_1hz_39hz      = pop_eegfiltnew(EEG_1hz,0,39);
+    EEG_ica_1hz_39hz  = pop_runica(EEG_1hz_39hz, 'icatype', 'runica', 'concatcond','on',...
+        'extended',1,'interrupt','on','reorder','on','options',{'pca',EEG.nbchan-1});
+
+    % high_pass filter passband edge 3Hz (cut-off 2 hz) no low-pass
+    EEG_2hz      = pop_eegfiltnew(EEG,3,0);
+    EEG_ica_2hz  = pop_runica(EEG_2hz, 'icatype', 'runica', 'concatcond','on',...
+        'extended',1,'interrupt','on','reorder','on','options',{'pca',EEG.nbchan-1});
+
+    % add low_pass 39Hz (cut-off 43 hz)
+    EEG_2hz_39hz      = pop_eegfiltnew(EEG_2hz,0,39);
+    EEG_ica_2hz_39hz  = pop_runica(EEG_2hz_39hz, 'icatype', 'runica', 'concatcond','on',...
+        'extended',1,'interrupt','on','reorder','on','options',{'pca',EEG.nbchan-1});
+
+    % save all that computational time for next time we want to run the tutorial
+    save all_filtICA -v7.3
+end
+
+% classify and make figures of the different filtered version
+EEG_ica_1hz_ICL = iclabel(EEG_ica_1hz);
+pop_viewprops(EEG_ica_1hz_ICL,0,1:20);
+set(gcf,'color','w','Colormap',diverging_bwr);
+EEG_ica_1hz_39hz_ICL = iclabel(EEG_ica_1hz_39hz);
+pop_viewprops(EEG_ica_1hz_39hz_ICL,0,1:20);
+set(gcf,'color','w','Colormap',diverging_bwr);
+EEG_ica_2hz_ICL = iclabel(EEG_ica_2hz);
+pop_viewprops(EEG_ica_2hz_ICL,0,1:20);
+set(gcf,'color','w','Colormap',diverging_bwr);
+pop_prop_extended(EEG_ica_2hz_ICL,0,1)
+set(gcf,'color','w','Colormap',diverging_bwr);
+EEG_ica_2hz_39hz_ICL = iclabel(EEG_ica_2hz_39hz);
+pop_viewprops(EEG_ica_2hz_39hz_ICL,0,1:20);
+set(gcf,'color','w','Colormap',diverging_bwr);
+
+%% Temporary filtering
+% *We can see that low frequency have more weights on ICA*
+% The 1st component for filtered data at 0.01Hz is classified as 'others'
+% with a power spectrum around 0, although it still have some 'brain' class
+% associated to it. ICA/IClabel seem to work best with at least 1Hz filter,
+% possibly adding a low-pass at 40Hz. At the same time, we want data
+% filtered at 0.05Hz. A solution is temporary filtering, that is filter
+% the data at say 2Hz/40Hz, compute ICA and labelling. We can then remove
+% the artefacts, i.e. components identified as such and backproject onto
+% the 0.01Hz we want.
+
+% we use  for backprojection of ICA weight matrix and ICA sphere matrix
+EEG_ica_2hz_39hz  = keepICA(EEG_ica_2hz_39hz);
+EEG_ica_bpr_002hz = ica_foreign_backproject(EEG_002hz,EEG_ica_2hz_39hz);
+
+% let's see what IClabel has to say about the back projection
+% the low frequency component is gone (unsurprizingly)
+EEG_ica_bpr_002hz_ICL = iclabel(EEG_ica_bpr_002hz);
+pop_viewprops(EEG_ica_bpr_002hz_ICL,0,1:20);
+set(gcf,'color','w','Colormap',diverging_bwr);
+
+% automatically keep Brain components
+EEG_ica_bpr_002hz_ICL_clean = pop_icflag(EEG_ica_bpr_002hz_ICL, IClabel_selection);
+EEG_ica_bpr_002hz_ICL_clean = pop_subcomp(EEG_ica_bpr_002hz_ICL_clean,...
+    find(EEG_ica_bpr_002hz_ICL_clean.reject.gcompreject) , 0);
+
+% Sanity check
+% we computed ICA for data at 0.2Hz/40Hz, back projected for the 0.01Hz
+% filtered data - re-ran IClabel, flag brain components, and projected them
+% onto the scalp creating a clean dataset. All components should now be
+% brain
+
+pop_prop_extended(EEG_ica_bpr_002hz_ICL_clean, 0, 1:10)
+
+%% Re-referencing
+% we have now two clean datasets, EEG_ica_002hz_ICL_clean and
+% EEG_ica_bpr_002hz_ICL_clean which have the power line removed with
+% ZapLine, then filtered at 0.01Hz (0.02Hz bound) and artefacts removed
+% using IClabel ; directly from the 0.01Hz data or using labeling of the
+% 2Hz/40Hz filtered data. We can now re-reference, we will use the common
+% average refrence and rest.
+
+EEG_ica_002hz_ICL_clean_ca     = pop_reref(EEG_ica_002hz_ICL_clean,[],'interpchan',[]);
+EEG_ica_bpr_002hz_ICL_clean_ca = pop_reref(EEG_ica_bpr_002hz_ICL_clean,[],'interpchan',[]);
+
+% REST parameters
+channel_locs = cell2mat(arrayfun(@(x) [x.X x.Y x.Z],EEG.chanlocs,'UniformOutput',false));
+xyz_dipoles  = load(fullfile(fileparts(which('pop_REST_reref.m')),'corti869-3000dipoles.dat'));
+% Calculate the dipole orientations.
+xyz_dipOri = bsxfun ( @rdivide, xyz_dipoles, sqrt ( sum ( xyz_dipoles .^ 2, 2 ) ) );
+xyz_dipOri ( 2601: 3000, 1 ) = 0;
+xyz_dipOri ( 2601: 3000, 2 ) = 0;
+xyz_dipOri ( 2601: 3000, 3 ) = 1;
+% define headmodel
+headmodel        = [];
+headmodel.type   = 'concentricspheres';
+headmodel.o      = [ 0.0000 0.0000 0.0000 ];
+headmodel.r      = [ 0.8700,0.9200,1];
+headmodel.cond   = [ 1.0000,0.0125,1];
+headmodel.tissue = { 'brain' 'skull' 'scalp' };
+% calculate leadfield
+[G,~] = dong_calc_leadfield3(channel_locs,xyz_dipoles,xyz_dipOri,headmodel);
+% compute
+EEG_ica_002hz_ICL_clean_rest          = EEG_ica_002hz_ICL_clean_ca;
+EEG_ica_002hz_ICL_clean_rest.data     = rest_refer(detrend(EEG_ica_002hz_ICL_clean_ca.data,'constant'),G');
+EEG_ica_bpr_002hz_ICL_clean_rest      = EEG_ica_bpr_002hz_ICL_clean_ca;
+EEG_ica_bpr_002hz_ICL_clean_rest.data = rest_refer(detrend(EEG_ica_bpr_002hz_ICL_clean_ca.data,'constant'),G');
+
+%% Check ERPs and statistics
+
+% Epoch data, remove baseline
+EEG_ica_002hz_ICL_clean_ca = pop_epoch(EEG_ica_002hz_ICL_clean_ca,...
+    {'famous_new','famous_second_early','famous_second_late',...
+    'scrambled_new','scrambled_second_early','scrambled_second_late',...
+    'unfamiliar_new','unfamiliar_second_early','unfamiliar_second_late'},...
+    [-0.2 1] ,'epochinfo','yes');
+pop_rmbase(EEG_ica_002hz_ICL_clean_ca,[-200 0]);
+EEG_ica_002hz_ICL_clean_ca = eeg_checkset(EEG_ica_002hz_ICL_clean_ca);
+
+EEG_ica_bpr_002hz_ICL_clean_ca = pop_epoch(EEG_ica_bpr_002hz_ICL_clean_ca,...
+    {'famous_new','famous_second_early','famous_second_late',...
+    'scrambled_new','scrambled_second_early','scrambled_second_late',...
+    'unfamiliar_new','unfamiliar_second_early','unfamiliar_second_late'},...
+    [-0.2 1] ,'epochinfo','yes');
+pop_rmbase(EEG_ica_bpr_002hz_ICL_clean_ca,[-200 0]);
+EEG_ica_bpr_002hz_ICL_clean_ca = eeg_checkset(EEG_ica_bpr_002hz_ICL_clean_ca);
+
+EEG_ica_002hz_ICL_clean_rest = pop_epoch(EEG_ica_002hz_ICL_clean_rest,...
+    {'famous_new','famous_second_early','famous_second_late',...
+    'scrambled_new','scrambled_second_early','scrambled_second_late',...
+    'unfamiliar_new','unfamiliar_second_early','unfamiliar_second_late'},...
+    [-0.2 1] ,'epochinfo','yes');
+pop_rmbase(EEG_ica_002hz_ICL_clean_rest,[-200 0]);
+EEG_ica_002hz_ICL_clean_rest = eeg_checkset(EEG_ica_002hz_ICL_clean_rest);
+
+EEG_ica_bpr_002hz_ICL_clean_rest = pop_epoch(EEG_ica_bpr_002hz_ICL_clean_rest,...
+    {'famous_new','famous_second_early','famous_second_late',...
+    'scrambled_new','scrambled_second_early','scrambled_second_late',...
+    'unfamiliar_new','unfamiliar_second_early','unfamiliar_second_late'},...
+    [-0.2 1] ,'epochinfo','yes');
+pop_rmbase(EEG_ica_bpr_002hz_ICL_clean_rest,[-200 0]);
+EEG_ica_bpr_002hz_ICL_clean_rest = eeg_checkset(EEG_ica_bpr_002hz_ICL_clean_rest);
+
+% Compute whole scalp statistics using LIMO tools
+% 1st we find the different type of faces
+% 2nd create a design matrix X such Y = BX + e
+% 3rd estimate the face effect using the GLM
+conditions = arrayfun(@(x) x.eventface_type{1},EEG_ica_002hz_ICL_clean_ca.epoch,...
+    'UniformOutput',false);
+condition_names = unique(conditions);
+DesignMatrix = [zeros(length(conditions),3) ones(length(conditions),1)];
+for c = 1:3
+    DesignMatrix(:,c) = cellfun(@(x) strcmp(x,condition_names{c}), conditions);
+end
+
+% let's illustrate differences on a channel
+channel = 64;
+cl = [1 0 0; 0 1 0; 0 0 1];
+figure('Name','ERP channel 63');
+for condition = 1:3
+    subplot(1,2,1);
+    plot(EEG_ica_002hz_ICL_clean_ca.times,...
+        mean(squeeze(EEG_ica_002hz_ICL_clean_ca.data(channel,:,logical(DesignMatrix(:,condition)))),2),...
+        'LineWidth',2,'Color',cl(condition,:));hold on
+    plot(EEG_ica_002hz_ICL_clean_ca.times,...
+        mean(squeeze(EEG_ica_002hz_ICL_clean_rest.data(channel,:,logical(DesignMatrix(:,condition)))),2),...
+        'REPLACE_WITH_DASH_DASH','LineWidth',2,'Color',cl(condition,:));
+    subplot(1,2,2);
+    plot(EEG_ica_002hz_ICL_clean_ca.times,...
+        mean(squeeze(EEG_ica_bpr_002hz_ICL_clean_ca.data(channel,:,logical(DesignMatrix(:,condition)))),2),...
+        'LineWidth',2,'Color',cl(condition,:));hold on
+    plot(EEG_ica_002hz_ICL_clean_ca.times,...
+        mean(squeeze(EEG_ica_bpr_002hz_ICL_clean_rest.data(channel,:,logical(DesignMatrix(:,condition)))),2),...
+        'REPLACE_WITH_DASH_DASH','LineWidth',2,'Color',cl(condition,:));
+end
+subplot(1,2,1); title('standard IClabel');grid on; box on
+subplot(1,2,2); title('IClabel with temporary filtering');grid on; box on
+drawnow
+
+%%
+% run GLM and F value and p-value maps
+for channel = size(EEG_ica_002hz_ICL_clean_ca.data,1):-1:1
+    model = limo_glm(squeeze(EEG_ica_002hz_ICL_clean_ca.data(channel,:,:))',...
+        DesignMatrix,3,0,0,'OLS','Time',[],[]);
+    Fmap1(channel,:) = model.conditions.F;
+    Pmap1(channel,:) = model.conditions.p;
+    model = limo_glm(squeeze(EEG_ica_bpr_002hz_ICL_clean_ca.data(channel,:,:))',...
+        DesignMatrix,3,0,0,'OLS','Time',[],[]);
+    Fmap2(channel,:) = model.conditions.F;
+    Pmap2(channel,:) = model.conditions.p;
+    model = limo_glm(squeeze(EEG_ica_002hz_ICL_clean_rest.data(channel,:,:))',...
+        DesignMatrix,3,0,0,'OLS','Time',[],[]);
+    Fmap3(channel,:) = model.conditions.F;
+    Pmap3(channel,:) = model.conditions.p;
+    model = limo_glm(squeeze(EEG_ica_bpr_002hz_ICL_clean_rest.data(channel,:,:))',...
+        DesignMatrix,3,0,0,'OLS','Time',[],[]);
+    Fmap4(channel,:) = model.conditions.F;
+    Pmap4(channel,:) = model.conditions.p;
+end
+
+
+% we can also check across all channels
+figure('Name','Stat results (uncorrected)')
+subplot(3,3,1);
+imagesc(EEG_ica_002hz_ICL_clean_ca.times,1:size(Fmap1,1),Fmap1.*(Pmap1<.05));
+set(gcf,'color','w','Colormap',diverging_bwr(129:end,:));
+xlabel('time (ms)'); ylabel('channels');
+title('Face effect IC with Filter 0.01Hz Ref: common')
+subplot(3,3,2);
+imagesc(EEG_ica_002hz_ICL_clean_ca.times,1:size(Fmap2,1),Fmap2.*(Pmap2<.05));
+set(gcf,'color','w','Colormap',diverging_bwr(129:end,:));
+xlabel('time (ms)'); ylabel('channels');
+title('Face effect IC with Filter 2Hz Ref: common')
+subplot(3,3,3);
+imagesc(EEG_ica_002hz_ICL_clean_ca.times,1:size(Fmap2,1),Pmap1-Pmap2)
+colormap(gca, diverging_bwr);
+xlabel('time (ms)'); ylabel('channels');
+title('p-value differences')
+
+subplot(3,3,4);
+imagesc(EEG_ica_002hz_ICL_clean_ca.times,1:size(Fmap3,1),Fmap3.*(Pmap3<.05));
+set(gcf,'color','w','Colormap',diverging_bwr(129:end,:));
+xlabel('time (ms)'); ylabel('channels');
+title('Face effect IC with Filter 0.01Hz Ref: rest')
+subplot(3,3,5);
+imagesc(EEG_ica_002hz_ICL_clean_ca.times,1:size(Fmap4,1),Fmap4.*(Pmap4<.05));
+set(gcf,'color','w','Colormap',diverging_bwr(129:end,:));
+xlabel('time (ms)'); ylabel('channels');
+title('Face effect IC with Filter 0.01Hz Ref: rest')
+subplot(3,3,6);
+imagesc(EEG_ica_002hz_ICL_clean_ca.times,1:size(Fmap3,1),Pmap3-Pmap4)
+colormap(gca, diverging_bwr);
+xlabel('time (ms)'); ylabel('channels');
+title('p-value differences')
+
+subplot(3,3,7);
+imagesc(EEG_ica_002hz_ICL_clean_ca.times,1:size(Fmap1,1),Pmap1-Pmap3)
+colormap(gca, diverging_bwr);
+xlabel('time (ms)'); ylabel('channels');
+title('p-value differences')
+subplot(3,3,8);
+imagesc(EEG_ica_002hz_ICL_clean_ca.times,1:size(Fmap2,1),Pmap2-Pmap4)
+colormap(gca, diverging_bwr);
+xlabel('time (ms)'); ylabel('channels');
+title('p-value differences')
+
+subplot(3,3,9);
+all = zeros(size(Fmap1,1),size(Fmap1,2),4);
+all(:,:,1) = Fmap1;
+all(:,:,2) = Fmap2;
+all(:,:,3) = Fmap3;
+all(:,:,4) = Fmap4;
+imagesc(EEG_ica_002hz_ICL_clean_ca.times,1:size(Fmap2,1),std(all,[],3))
+colormap(gca, diverging_bwr);
+xlabel('time (ms)'); ylabel('channels');
+title('F-values vibration (std among methods)')
+
+
+##### SOURCE END #####
+--></body></html>
