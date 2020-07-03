@@ -8,8 +8,8 @@ The data used in this tutorial come from Wakeman and Henson (2015). In this expe
 
 The data were prepared (i.e. EEG extracted, timing corrected, electrode position re-oriented, event recorded) by Dung Truong, Ramon Martinez & Arnaud Delorme and can be downloaded from [OpenNeuro](10.18112/openneuro.ds002718.v1.0.2).
 
-/data folder contains sub011 used to illustrate changes related to preprocessing.
-**You must download the .fdt file and unzip it to re-run the analysis** 
+/data folder contains sub011 used to illustrate changes related to preprocessing.  
+**You must download the .fdt file and unzip it to re-run the analysis**
 
 ## Code and dependencies
 
