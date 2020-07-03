@@ -6,7 +6,7 @@
    <!--
 This HTML was auto-generated from MATLAB code.
 To make changes, update the MATLAB code and republish this document.
-      --><title>OHBM2020 EEG Preprocessing: not so basic after all</title><meta name="generator" content="MATLAB 9.8"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2020-07-03"><meta name="DC.source" content="effect_of_preprocessing.m"><style type="text/css">
+      --><title>OHBM2020 EEG Preprocessing: not so basic after all</title><meta name="generator" content="MATLAB 9.8"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2020-07-03"><meta name="DC.source" content="index.m"><style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
 
 html { min-height:100%; margin-bottom:1px; }
@@ -117,7 +117,6 @@ datafolder = [fileparts(current) filesep <span class="string">'data'</span> file
 <span class="keyword">end</span>
 </pre><pre class="codeoutput">Some menus items hidden. Use Preference menu to show them all.
 eeglab: options file is C:\Users\cpernet\eeg_options.m
-EEGLAB warning: there can be only one EEGLAB window, closing old one
 Retrieving plugin versions from server...
 Retreiving download statistics...
 EEGLAB: adding "Biosig" to the path; subfolders (if any) might be missing from the path
@@ -132,7 +131,7 @@ EEGLAB: adding "dipfit" v3.3 (see &gt;&gt; help eegplugin_dipfit)
 EEGLAB: adding "firfilt" v2.4 (see &gt;&gt; help eegplugin_firfilt)
 EEGLAB: adding "limo_tools" v2.0 (see &gt;&gt; help eegplugin_limo)
 You are using the latest version of EEGLAB.
-</pre><img vspace="5" hspace="5" src="effect_of_preprocessing_01.png" alt=""> <h2 id="2">we start by loading the data and removing EKG, HEOG, VEOG</h2><pre class="codeinput">EEG = pop_loadset(datafile);
+</pre><img vspace="5" hspace="5" src="index_01.png" alt=""> <h2 id="2">we start by loading the data and removing EKG, HEOG, VEOG</h2><pre class="codeinput">EEG = pop_loadset(datafile);
 EEG = pop_select(EEG, <span class="string">'nochannel'</span>,{<span class="string">'EEG061'</span>,<span class="string">'EEG062'</span>,<span class="string">'EEG063'</span>,<span class="string">'EEG064'</span>});
 
 figure(<span class="string">'Name'</span>,<span class="string">'Raw data topography'</span>);
@@ -150,7 +149,7 @@ pop_spectopo(): selecting time range   0.00 ms to 743000.00 ms (points 1 to 1857
 Pop_spectopo: finding data discontinuities
 Selecting the first 15.0% of data for analysis...
 Click on each trace for channel/component index
-</pre><img vspace="5" hspace="5" src="effect_of_preprocessing_02.png" alt=""> <h2 id="3">bad channel indentification</h2><p>we use here cleanraw_data.m comparing results with or witout 1Hz temporary filter</p><pre class="codeinput"><span class="comment">% create the copy and remove bad channels (includes a filter at 0.5Hz)</span>
+</pre><img vspace="5" hspace="5" src="index_02.png" alt=""> <h2 id="3">bad channel indentification</h2><p>we use here cleanraw_data.m comparing results with or witout 1Hz temporary filter</p><pre class="codeinput"><span class="comment">% create the copy and remove bad channels (includes a filter at 0.5Hz)</span>
 EEG_badchan = EEG;
 EEG_badchan = pop_clean_rawdata(EEG_badchan,<span class="string">'FlatlineCriterion'</span>,5,<span class="string">'ChannelCriterion'</span>,0.8,<span class="keyword">...</span>
     <span class="string">'LineNoiseCriterion'</span>,4,<span class="string">'Highpass'</span>,[0.25 0.75] ,<span class="keyword">...</span>
@@ -175,10 +174,9 @@ ind_retained = find(arrayfun(@(x)ismember(x.labels,tbl_channels.labels),EEG.chan
 ind_bad      = setdiff(1:size(EEG.chanlocs,1),ind_retained);
 EEG          = pop_select(EEG, <span class="string">'nochannel'</span>,{EEG.chanlocs(ind_bad).labels});
 </pre><pre class="codeoutput">Scanning for bad channels...
-clean_channel:   1/594 blocks, 0.4 minutes remaining.
-clean_channel:   2/594 blocks, 0.4 minutes remaining.
-clean_channel:   3/594 blocks, 0.4 minutes remaining.
-....
+clean_channel:   1/594 blocks, 0.5 minutes remaining.
+clean_channel:   2/594 blocks, 0.5 minutes remaining.
+...
 clean_channel: 594/594 blocks, 0.0 minutes remaining.
 Removing 1 channel(s)...
 Use vis_artifacts to compare the cleaned data to the original.
@@ -190,17 +188,17 @@ pop_eegfiltnew() - cutoff frequency(ies) (-6 dB): 0.5 Hz
 pop_eegfiltnew() - filtering the data (zero-phase, non-causal)
 firfilt(): |====================| 100%, ETE 00:00
 Scanning for bad channels...
-clean_channel:   1/594 blocks, 0.4 minutes remaining.
+clean_channel:   1/594 blocks, 0.5 minutes remaining.
 clean_channel:   2/594 blocks, 0.5 minutes remaining.
-clean_channel:   3/594 blocks, 0.4 minutes remaining.
-....
+...
 clean_channel: 594/594 blocks, 0.0 minutes remaining.
 Removing 1 channel(s)...
 Use vis_artifacts to compare the cleaned data to the original.
 Done.
+Current plot held
 
 Removing 1 channel(s)...
-</pre><img vspace="5" hspace="5" src="effect_of_preprocessing_03.png" alt=""> <img vspace="5" hspace="5" src="effect_of_preprocessing_04.png" alt=""> <img vspace="5" hspace="5" src="effect_of_preprocessing_05.png" alt=""> <h2 id="4"><a href="https://www.sciencedirect.com/science/article/pii/S1053811919309474">Zapline</a> to remove Power line artifacts</h2><p>Empirical tests showed that 7 components are required to sufficiently remove the line noise - note the spatial distribution of PSD values stays the same at the different frequencies, except a small change posteriorly at the ~22Hz <a href="https://en.wikipedia.org/wiki/Harmonic">sub-harmonic</a> frequency</p><pre class="codeinput"><span class="comment">% Notch filter (better not used) would be:</span>
+</pre><img vspace="5" hspace="5" src="index_03.png" alt=""> <img vspace="5" hspace="5" src="index_04.png" alt=""> <img vspace="5" hspace="5" src="index_05.png" alt=""> <h2 id="4"><a href="https://www.sciencedirect.com/science/article/pii/S1053811919309474">Zapline</a> to remove Power line artifacts</h2><p>Empirical tests showed that 7 components are required to sufficiently remove the line noise - note the spatial distribution of PSD values stays the same at the different frequencies, except a small change posteriorly at the ~22Hz <a href="https://en.wikipedia.org/wiki/Harmonic">sub-harmonic</a> frequency</p><pre class="codeinput"><span class="comment">% Notch filter (better not used) would be:</span>
 <span class="comment">% EEG = pop_eegfiltnew(EEG, 48,52,826,1,[],0);</span>
 
 <span class="comment">% test Zapline with different number of components:</span>
@@ -281,7 +279,7 @@ Pop_spectopo: finding data discontinuities
 Selecting the first 15.0% of data for analysis...
 Click on each trace for channel/component index
 proportion of non-DC power removed 0.0177047
-:</pre><img vspace="5" hspace="5" src="effect_of_preprocessing_06.png" alt=""> <img vspace="5" hspace="5" src="effect_of_preprocessing_07.png" alt=""> <h2 id="5">Let's look at the effect of high-pass and low-pass filters on artefacts</h2><p>We will filter using default parameters from EEGLab, compute ICA and use IClabel to classify artefacts.</p><pre class="codeinput">IClabel_selection = repmat([0.8 1],7,1); <span class="comment">% prob. [80% 100%]</span>
+:</pre><img vspace="5" hspace="5" src="index_06.png" alt=""> <img vspace="5" hspace="5" src="index_07.png" alt=""> <h2 id="5">Let's look at the effect of high-pass and low-pass filters on artefacts</h2><p>We will filter using default parameters from EEGLab, compute ICA and use IClabel to classify artefacts.</p><pre class="codeinput">IClabel_selection = repmat([0.8 1],7,1); <span class="comment">% prob. [80% 100%]</span>
 IClabel_selection(1,:) = NaN;            <span class="comment">% do not flag brain</span>
 
 <span class="comment">% The recommendation for ERP is a high-pass filter between 0.01 to 0.05Hz</span>
@@ -337,9 +335,9 @@ Click on each trace for channel/component index
 
 ans =
 
-  Figure (9: IC1 - pop_prop_extended()) with properties:
+  Figure (8: IC1 - pop_prop_extended()) with properties:
 
-      Number: 9
+      Number: 8
         Name: 'IC1 - pop_prop_extended()'
        Color: [0.9300 0.9600 1]
     Position: [-280 -82 1200 699.6667]
@@ -347,7 +345,7 @@ ans =
 
   Use GET to show all properties
 
-</pre><img vspace="5" hspace="5" src="effect_of_preprocessing_08.png" alt=""> <img vspace="5" hspace="5" src="effect_of_preprocessing_09.png" alt=""> <p>if we are happy with this result, the clean data are</p><pre class="codeinput">EEG_ica_002hz_ICL_clean = pop_icflag(EEG_ica_002hz_ICL,IClabel_selection);
+</pre><img vspace="5" hspace="5" src="index_08.png" alt=""> <img vspace="5" hspace="5" src="index_09.png" alt=""> <p>if we are happy with this result, the clean data are</p><pre class="codeinput">EEG_ica_002hz_ICL_clean = pop_icflag(EEG_ica_002hz_ICL,IClabel_selection);
 EEG_ica_002hz_ICL_clean = pop_subcomp(EEG_ica_002hz_ICL_clean, <span class="keyword">...</span>
     find(EEG_ica_002hz_ICL_clean.reject.gcompreject), 0);
 
@@ -391,9 +389,9 @@ Click on each trace for channel/component index
 
 ans =
 
-  Figure (11: IC1 - pop_prop_extended()) with properties:
+  Figure (10: IC1 - pop_prop_extended()) with properties:
 
-      Number: 11
+      Number: 10
         Name: 'IC1 - pop_prop_extended()'
        Color: [0.9300 0.9600 1]
     Position: [-280 -82 1200 699.6667]
@@ -401,7 +399,7 @@ ans =
 
   Use GET to show all properties
 
-</pre><img vspace="5" hspace="5" src="effect_of_preprocessing_10.png" alt=""> <img vspace="5" hspace="5" src="effect_of_preprocessing_11.png" alt=""> <p><i>Let's test different filters</i></p><pre class="codeinput"><span class="keyword">if</span> ~exist(<span class="string">'all_filtICA.mat'</span>,<span class="string">'file'</span>)
+</pre><img vspace="5" hspace="5" src="index_10.png" alt=""> <img vspace="5" hspace="5" src="index_11.png" alt=""> <p><i>Let's test different filters</i></p><pre class="codeinput"><span class="keyword">if</span> ~exist(<span class="string">'all_filtICA.mat'</span>,<span class="string">'file'</span>)
     <span class="comment">% high-pass filter passband edge 1hz (cut-off 0.5 hz) no low-pass</span>
     EEG_1hz = pop_eegfiltnew(EEG,1,0);
     EEG_ica_1hz  = pop_runica(EEG_1hz, <span class="string">'icatype'</span>, <span class="string">'runica'</span>, <span class="string">'concatcond'</span>,<span class="string">'on'</span>,<span class="keyword">...</span>
@@ -481,9 +479,9 @@ Click on each trace for channel/component index
 
 ans =
 
-  Figure (15: IC1 - pop_prop_extended()) with properties:
+  Figure (14: IC1 - pop_prop_extended()) with properties:
 
-      Number: 15
+      Number: 14
         Name: 'IC1 - pop_prop_extended()'
        Color: [0.9300 0.9600 1]
     Position: [-280 -82 1200 699.6667]
@@ -496,7 +494,7 @@ ICLabel: calculating labels...
 ICLabel: saving results...
 Drawing figure...
 More than 64 electrodes: electrode locations not shown
-</pre><img vspace="5" hspace="5" src="effect_of_preprocessing_12.png" alt=""> <img vspace="5" hspace="5" src="effect_of_preprocessing_13.png" alt=""> <img vspace="5" hspace="5" src="effect_of_preprocessing_14.png" alt=""> <img vspace="5" hspace="5" src="effect_of_preprocessing_15.png" alt=""> <img vspace="5" hspace="5" src="effect_of_preprocessing_16.png" alt=""> <h2 id="8">Temporary filtering</h2><p><b>We can see that low frequency have more weights on ICA</b> The 1st component for filtered data at 0.01Hz is classified as 'others' with a power spectrum around 0, although it still have some 'brain' class associated to it. ICA/IClabel seem to work best with at least 1Hz filter, possibly adding a low-pass at 40Hz. At the same time, we want data filtered at 0.05Hz. A solution is temporary filtering, that is filter the data at say 2Hz/40Hz, compute ICA and labelling. We can then remove the artefacts, i.e. components identified as such and backproject onto the 0.01Hz we want.</p><pre class="codeinput"><span class="comment">% we use  for backprojection of ICA weight matrix and ICA sphere matrix</span>
+</pre><img vspace="5" hspace="5" src="index_12.png" alt=""> <img vspace="5" hspace="5" src="index_13.png" alt=""> <img vspace="5" hspace="5" src="index_14.png" alt=""> <img vspace="5" hspace="5" src="index_15.png" alt=""> <img vspace="5" hspace="5" src="index_16.png" alt=""> <h2 id="8">Temporary filtering</h2><p><b>We can see that low frequency have more weights on ICA</b> The 1st component for filtered data at 0.01Hz is classified as 'others' with a power spectrum around 0, although it still have some 'brain' class associated to it. ICA/IClabel seem to work best with at least 1Hz filter, possibly adding a low-pass at 40Hz. At the same time, we want data filtered at 0.05Hz. A solution is temporary filtering, that is filter the data at say 2Hz/40Hz, compute ICA and labelling. We can then remove the artefacts, i.e. components identified as such and backproject onto the 0.01Hz we want.</p><pre class="codeinput"><span class="comment">% we use  for backprojection of ICA weight matrix and ICA sphere matrix</span>
 EEG_ica_2hz_39hz  = keepICA(EEG_ica_2hz_39hz);
 EEG_ica_bpr_002hz = ica_foreign_backproject(EEG_002hz,EEG_ica_2hz_39hz);
 
@@ -746,7 +744,7 @@ Computing spectra (window length 250; fft length: 250; overlap 0):
 .Scaling spectrum by component RMS of scalp map power
 
 Click on each trace for channel/component index
-</pre><img vspace="5" hspace="5" src="effect_of_preprocessing_17.png" alt=""> <img vspace="5" hspace="5" src="effect_of_preprocessing_18.png" alt=""> <img vspace="5" hspace="5" src="effect_of_preprocessing_19.png" alt=""> <img vspace="5" hspace="5" src="effect_of_preprocessing_20.png" alt=""> <img vspace="5" hspace="5" src="effect_of_preprocessing_21.png" alt=""> <img vspace="5" hspace="5" src="effect_of_preprocessing_22.png" alt=""> <img vspace="5" hspace="5" src="effect_of_preprocessing_23.png" alt=""> <img vspace="5" hspace="5" src="effect_of_preprocessing_24.png" alt=""> <img vspace="5" hspace="5" src="effect_of_preprocessing_25.png" alt=""> <img vspace="5" hspace="5" src="effect_of_preprocessing_26.png" alt=""> <img vspace="5" hspace="5" src="effect_of_preprocessing_27.png" alt=""> <h2 id="9">Re-referencing</h2><p>we have now two clean datasets, EEG_ica_002hz_ICL_clean and EEG_ica_bpr_002hz_ICL_clean which have the power line removed with ZapLine, then filtered at 0.01Hz (0.02Hz bound) and artefacts removed using IClabel ; directly from the 0.01Hz data or using labeling of the 2Hz/40Hz filtered data. We can now re-reference, we will use the common average refrence and rest.</p><pre class="codeinput">EEG_ica_002hz_ICL_clean_ca     = pop_reref(EEG_ica_002hz_ICL_clean,[],<span class="string">'interpchan'</span>,[]);
+</pre><img vspace="5" hspace="5" src="index_17.png" alt=""> <img vspace="5" hspace="5" src="index_18.png" alt=""> <img vspace="5" hspace="5" src="index_19.png" alt=""> <img vspace="5" hspace="5" src="index_20.png" alt=""> <img vspace="5" hspace="5" src="index_21.png" alt=""> <img vspace="5" hspace="5" src="index_22.png" alt=""> <img vspace="5" hspace="5" src="index_23.png" alt=""> <img vspace="5" hspace="5" src="index_24.png" alt=""> <img vspace="5" hspace="5" src="index_25.png" alt=""> <img vspace="5" hspace="5" src="index_26.png" alt=""> <img vspace="5" hspace="5" src="index_27.png" alt=""> <h2 id="9">Re-referencing</h2><p>we have now two clean datasets, EEG_ica_002hz_ICL_clean and EEG_ica_bpr_002hz_ICL_clean which have the power line removed with ZapLine, then filtered at 0.01Hz (0.02Hz bound) and artefacts removed using IClabel ; directly from the 0.01Hz data or using labeling of the 2Hz/40Hz filtered data. We can now re-reference, we will use the common average refrence and rest.</p><pre class="codeinput">EEG_ica_002hz_ICL_clean_ca     = pop_reref(EEG_ica_002hz_ICL_clean,[],<span class="string">'interpchan'</span>,[]);
 EEG_ica_bpr_002hz_ICL_clean_ca = pop_reref(EEG_ica_bpr_002hz_ICL_clean,[],<span class="string">'interpchan'</span>,[]);
 
 <span class="comment">% REST parameters</span>
@@ -882,7 +880,7 @@ Scaling components to RMS microvolt
 eeg_checkset: recomputing the ICA activation matrix ...
 pop_epoch(): checking epochs for data discontinuity
 pop_rmbase(): Removing baseline...
-</pre><img vspace="5" hspace="5" src="effect_of_preprocessing_28.png" alt=""> <p>run GLM and F value and p-value maps</p><pre class="codeinput"><span class="keyword">for</span> channel = size(EEG_ica_002hz_ICL_clean_ca.data,1):-1:1
+</pre><img vspace="5" hspace="5" src="index_28.png" alt=""> <p>run GLM and F value and p-value maps</p><pre class="codeinput"><span class="keyword">for</span> channel = size(EEG_ica_002hz_ICL_clean_ca.data,1):-1:1
     model = limo_glm(squeeze(EEG_ica_002hz_ICL_clean_ca.data(channel,:,:))',<span class="keyword">...</span>
         DesignMatrix,3,0,0,<span class="string">'OLS'</span>,<span class="string">'Time'</span>,[],[]);
     Fmap1(channel,:) = model.conditions.F;
@@ -957,7 +955,7 @@ imagesc(EEG_ica_002hz_ICL_clean_ca.times,1:size(Fmap2,1),std(all,[],3))
 colormap(gca, diverging_bwr);
 xlabel(<span class="string">'time (ms)'</span>); ylabel(<span class="string">'channels'</span>);
 title(<span class="string">'F-values vibration (std among methods)'</span>)
-</pre><img vspace="5" hspace="5" src="effect_of_preprocessing_29.png" alt=""> <p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2020a</a><br></p></div><!--
+</pre><img vspace="5" hspace="5" src="index_29.png" alt=""> <p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2020a</a><br></p></div><!--
 ##### SOURCE BEGIN #####
 %% OHBM2020 EEG Preprocessing: not so basic after all
 %
@@ -1018,6 +1016,7 @@ if ~exist(fullfile(datafolder,'sub-011_task-FaceRecognition_eeg.set'),'file')
 else
     datafile = fullfile(datafolder,'sub-011_task-FaceRecognition_eeg.set');
 end
+
 
 %% we start by loading the data and removing EKG, HEOG, VEOG
 EEG = pop_loadset(datafile);
