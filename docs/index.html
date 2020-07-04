@@ -6,7 +6,7 @@
    <!--
 This HTML was auto-generated from MATLAB code.
 To make changes, update the MATLAB code and republish this document.
-      --><title>OHBM2020 EEG Preprocessing: not so basic after all</title><meta name="generator" content="MATLAB 9.8"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2020-07-03"><meta name="DC.source" content="index.m"><style type="text/css">
+      --><title>OHBM2020 EEG Preprocessing: not so basic after all</title><meta name="generator" content="MATLAB 9.8"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2020-07-04"><meta name="DC.source" content="index.m"><style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
 
 html { min-height:100%; margin-bottom:1px; }
@@ -67,7 +67,7 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
 
 
 
-  </style></head><body><div class="content"><h1>OHBM2020 EEG Preprocessing: not so basic after all</h1><!--introduction--><p><b>This script illustrate the effect of filtering, IC labeling and referencing on statistical results.</b> The data are taken from <a href="https://openneuro.org/datasets/ds002718/versions/1.0.2">https://openneuro.org/datasets/ds002718/versions/1.0.2</a> We use here sub-011 only. The code was writen by Cyril Pernet, reusing Nicolas Langers' code from <a href="https://osf.io/z8uqx/">OSF</a> and snippet from LI Dong.</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">let's check the environement, files, etc</a></li><li><a href="#2">we start by loading the data and removing EKG, HEOG, VEOG</a></li><li><a href="#3">bad channel indentification</a></li><li><a href="#4"><a href="https://www.sciencedirect.com/science/article/pii/S1053811919309474">Zapline</a> to remove Power line artifacts</a></li><li><a href="#5">Let's look at the effect of high-pass and low-pass filters on artefacts</a></li><li><a href="#8">Temporary filtering</a></li><li><a href="#9">Re-referencing</a></li><li><a href="#10">Check ERPs and statistics</a></li></ul></div><h2 id="1">let's check the environement, files, etc</h2><pre class="codeinput">clc
+  </style></head><body><div class="content"><h1>OHBM2020 EEG Preprocessing: not so basic after all</h1><!--introduction--><p><b>This script illustrate the effect of filtering, IC labeling and referencing on statistical results.</b> The data are taken from <a href="https://openneuro.org/datasets/ds002718/versions/1.0.2">https://openneuro.org/datasets/ds002718/versions/1.0.2</a> We use here sub-011 only. The code was writen by Cyril Pernet, reusing Nicolas Langers' code from <a href="https://osf.io/z8uqx/">OSF</a></p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">let's check the environement, files, etc</a></li><li><a href="#2">we start by loading the data and removing EKG, HEOG, VEOG</a></li><li><a href="#3">bad channel indentification</a></li><li><a href="#4"><a href="https://www.sciencedirect.com/science/article/pii/S1053811919309474">Zapline</a> to remove Power line artifacts</a></li><li><a href="#6">Let's look at the effect of high-pass and low-pass filters on artefacts</a></li><li><a href="#10">Temporary filtering</a></li><li><a href="#12">Re-referencing</a></li><li><a href="#13">Check ERPs and statistics</a></li></ul></div><h2 id="1">let's check the environement, files, etc</h2><pre class="codeinput">clc
 clear <span class="string">variables</span>
 current = pwd;  <span class="comment">%% assuming we are in \code</span>
 addpath([current filesep <span class="string">'NT_tools'</span>]);
@@ -174,11 +174,601 @@ ind_retained = find(arrayfun(@(x)ismember(x.labels,tbl_channels.labels),EEG.chan
 ind_bad      = setdiff(1:size(EEG.chanlocs,1),ind_retained);
 EEG          = pop_select(EEG, <span class="string">'nochannel'</span>,{EEG.chanlocs(ind_bad).labels});
 </pre><pre class="codeoutput">Scanning for bad channels...
-clean_channel:   1/594 blocks, 0.5 minutes remaining.
-clean_channel:   2/594 blocks, 0.5 minutes remaining.
-...
+clean_channel:   1/594 blocks, 0.4 minutes remaining.
+clean_channel:   2/594 blocks, 0.4 minutes remaining.
+clean_channel:   3/594 blocks, 0.4 minutes remaining.
+clean_channel:   4/594 blocks, 0.4 minutes remaining.
+clean_channel:   5/594 blocks, 0.4 minutes remaining.
+clean_channel:   6/594 blocks, 0.4 minutes remaining.
+clean_channel:   7/594 blocks, 0.4 minutes remaining.
+clean_channel:   8/594 blocks, 0.4 minutes remaining.
+clean_channel:   9/594 blocks, 0.4 minutes remaining.
+clean_channel:  10/594 blocks, 0.4 minutes remaining.
+clean_channel:  11/594 blocks, 0.4 minutes remaining.
+clean_channel:  12/594 blocks, 0.4 minutes remaining.
+clean_channel:  13/594 blocks, 0.4 minutes remaining.
+clean_channel:  14/594 blocks, 0.4 minutes remaining.
+clean_channel:  15/594 blocks, 0.4 minutes remaining.
+clean_channel:  16/594 blocks, 0.4 minutes remaining.
+clean_channel:  17/594 blocks, 0.4 minutes remaining.
+clean_channel:  18/594 blocks, 0.4 minutes remaining.
+clean_channel:  19/594 blocks, 0.4 minutes remaining.
+clean_channel:  20/594 blocks, 0.4 minutes remaining.
+clean_channel:  21/594 blocks, 0.4 minutes remaining.
+clean_channel:  22/594 blocks, 0.4 minutes remaining.
+clean_channel:  23/594 blocks, 0.4 minutes remaining.
+clean_channel:  24/594 blocks, 0.4 minutes remaining.
+clean_channel:  25/594 blocks, 0.4 minutes remaining.
+clean_channel:  26/594 blocks, 0.4 minutes remaining.
+clean_channel:  27/594 blocks, 0.4 minutes remaining.
+clean_channel:  28/594 blocks, 0.4 minutes remaining.
+clean_channel:  29/594 blocks, 0.4 minutes remaining.
+clean_channel:  30/594 blocks, 0.4 minutes remaining.
+clean_channel:  31/594 blocks, 0.4 minutes remaining.
+clean_channel:  32/594 blocks, 0.4 minutes remaining.
+clean_channel:  33/594 blocks, 0.4 minutes remaining.
+clean_channel:  34/594 blocks, 0.4 minutes remaining.
+clean_channel:  35/594 blocks, 0.4 minutes remaining.
+clean_channel:  36/594 blocks, 0.4 minutes remaining.
+clean_channel:  37/594 blocks, 0.4 minutes remaining.
+clean_channel:  38/594 blocks, 0.4 minutes remaining.
+clean_channel:  39/594 blocks, 0.4 minutes remaining.
+clean_channel:  40/594 blocks, 0.4 minutes remaining.
+clean_channel:  41/594 blocks, 0.4 minutes remaining.
+clean_channel:  42/594 blocks, 0.4 minutes remaining.
+clean_channel:  43/594 blocks, 0.4 minutes remaining.
+clean_channel:  44/594 blocks, 0.4 minutes remaining.
+clean_channel:  45/594 blocks, 0.4 minutes remaining.
+clean_channel:  46/594 blocks, 0.4 minutes remaining.
+clean_channel:  47/594 blocks, 0.4 minutes remaining.
+clean_channel:  48/594 blocks, 0.4 minutes remaining.
+clean_channel:  49/594 blocks, 0.4 minutes remaining.
+clean_channel:  50/594 blocks, 0.4 minutes remaining.
+clean_channel:  51/594 blocks, 0.4 minutes remaining.
+clean_channel:  52/594 blocks, 0.4 minutes remaining.
+clean_channel:  53/594 blocks, 0.4 minutes remaining.
+clean_channel:  54/594 blocks, 0.4 minutes remaining.
+clean_channel:  55/594 blocks, 0.4 minutes remaining.
+clean_channel:  56/594 blocks, 0.4 minutes remaining.
+clean_channel:  57/594 blocks, 0.4 minutes remaining.
+clean_channel:  58/594 blocks, 0.4 minutes remaining.
+clean_channel:  59/594 blocks, 0.4 minutes remaining.
+clean_channel:  60/594 blocks, 0.4 minutes remaining.
+clean_channel:  61/594 blocks, 0.4 minutes remaining.
+clean_channel:  62/594 blocks, 0.4 minutes remaining.
+clean_channel:  63/594 blocks, 0.4 minutes remaining.
+clean_channel:  64/594 blocks, 0.4 minutes remaining.
+clean_channel:  65/594 blocks, 0.4 minutes remaining.
+clean_channel:  66/594 blocks, 0.4 minutes remaining.
+clean_channel:  67/594 blocks, 0.4 minutes remaining.
+clean_channel:  68/594 blocks, 0.4 minutes remaining.
+clean_channel:  69/594 blocks, 0.4 minutes remaining.
+clean_channel:  70/594 blocks, 0.4 minutes remaining.
+clean_channel:  71/594 blocks, 0.4 minutes remaining.
+clean_channel:  72/594 blocks, 0.4 minutes remaining.
+clean_channel:  73/594 blocks, 0.4 minutes remaining.
+clean_channel:  74/594 blocks, 0.4 minutes remaining.
+clean_channel:  75/594 blocks, 0.4 minutes remaining.
+clean_channel:  76/594 blocks, 0.4 minutes remaining.
+clean_channel:  77/594 blocks, 0.4 minutes remaining.
+clean_channel:  78/594 blocks, 0.4 minutes remaining.
+clean_channel:  79/594 blocks, 0.4 minutes remaining.
+clean_channel:  80/594 blocks, 0.4 minutes remaining.
+clean_channel:  81/594 blocks, 0.4 minutes remaining.
+clean_channel:  82/594 blocks, 0.4 minutes remaining.
+clean_channel:  83/594 blocks, 0.4 minutes remaining.
+clean_channel:  84/594 blocks, 0.4 minutes remaining.
+clean_channel:  85/594 blocks, 0.4 minutes remaining.
+clean_channel:  86/594 blocks, 0.4 minutes remaining.
+clean_channel:  87/594 blocks, 0.4 minutes remaining.
+clean_channel:  88/594 blocks, 0.4 minutes remaining.
+clean_channel:  89/594 blocks, 0.4 minutes remaining.
+clean_channel:  90/594 blocks, 0.4 minutes remaining.
+clean_channel:  91/594 blocks, 0.4 minutes remaining.
+clean_channel:  92/594 blocks, 0.4 minutes remaining.
+clean_channel:  93/594 blocks, 0.4 minutes remaining.
+clean_channel:  94/594 blocks, 0.4 minutes remaining.
+clean_channel:  95/594 blocks, 0.4 minutes remaining.
+clean_channel:  96/594 blocks, 0.4 minutes remaining.
+clean_channel:  97/594 blocks, 0.4 minutes remaining.
+clean_channel:  98/594 blocks, 0.4 minutes remaining.
+clean_channel:  99/594 blocks, 0.4 minutes remaining.
+clean_channel: 100/594 blocks, 0.4 minutes remaining.
+clean_channel: 101/594 blocks, 0.4 minutes remaining.
+clean_channel: 102/594 blocks, 0.4 minutes remaining.
+clean_channel: 103/594 blocks, 0.4 minutes remaining.
+clean_channel: 104/594 blocks, 0.4 minutes remaining.
+clean_channel: 105/594 blocks, 0.4 minutes remaining.
+clean_channel: 106/594 blocks, 0.4 minutes remaining.
+clean_channel: 107/594 blocks, 0.4 minutes remaining.
+clean_channel: 108/594 blocks, 0.4 minutes remaining.
+clean_channel: 109/594 blocks, 0.4 minutes remaining.
+clean_channel: 110/594 blocks, 0.4 minutes remaining.
+clean_channel: 111/594 blocks, 0.4 minutes remaining.
+clean_channel: 112/594 blocks, 0.4 minutes remaining.
+clean_channel: 113/594 blocks, 0.4 minutes remaining.
+clean_channel: 114/594 blocks, 0.4 minutes remaining.
+clean_channel: 115/594 blocks, 0.4 minutes remaining.
+clean_channel: 116/594 blocks, 0.4 minutes remaining.
+clean_channel: 117/594 blocks, 0.4 minutes remaining.
+clean_channel: 118/594 blocks, 0.4 minutes remaining.
+clean_channel: 119/594 blocks, 0.4 minutes remaining.
+clean_channel: 120/594 blocks, 0.4 minutes remaining.
+clean_channel: 121/594 blocks, 0.4 minutes remaining.
+clean_channel: 122/594 blocks, 0.4 minutes remaining.
+clean_channel: 123/594 blocks, 0.4 minutes remaining.
+clean_channel: 124/594 blocks, 0.4 minutes remaining.
+clean_channel: 125/594 blocks, 0.4 minutes remaining.
+clean_channel: 126/594 blocks, 0.4 minutes remaining.
+clean_channel: 127/594 blocks, 0.4 minutes remaining.
+clean_channel: 128/594 blocks, 0.4 minutes remaining.
+clean_channel: 129/594 blocks, 0.4 minutes remaining.
+clean_channel: 130/594 blocks, 0.4 minutes remaining.
+clean_channel: 131/594 blocks, 0.4 minutes remaining.
+clean_channel: 132/594 blocks, 0.4 minutes remaining.
+clean_channel: 133/594 blocks, 0.4 minutes remaining.
+clean_channel: 134/594 blocks, 0.4 minutes remaining.
+clean_channel: 135/594 blocks, 0.4 minutes remaining.
+clean_channel: 136/594 blocks, 0.4 minutes remaining.
+clean_channel: 137/594 blocks, 0.4 minutes remaining.
+clean_channel: 138/594 blocks, 0.4 minutes remaining.
+clean_channel: 139/594 blocks, 0.4 minutes remaining.
+clean_channel: 140/594 blocks, 0.4 minutes remaining.
+clean_channel: 141/594 blocks, 0.3 minutes remaining.
+clean_channel: 142/594 blocks, 0.3 minutes remaining.
+clean_channel: 143/594 blocks, 0.3 minutes remaining.
+clean_channel: 144/594 blocks, 0.3 minutes remaining.
+clean_channel: 145/594 blocks, 0.3 minutes remaining.
+clean_channel: 146/594 blocks, 0.3 minutes remaining.
+clean_channel: 147/594 blocks, 0.3 minutes remaining.
+clean_channel: 148/594 blocks, 0.3 minutes remaining.
+clean_channel: 149/594 blocks, 0.3 minutes remaining.
+clean_channel: 150/594 blocks, 0.3 minutes remaining.
+clean_channel: 151/594 blocks, 0.3 minutes remaining.
+clean_channel: 152/594 blocks, 0.3 minutes remaining.
+clean_channel: 153/594 blocks, 0.3 minutes remaining.
+clean_channel: 154/594 blocks, 0.3 minutes remaining.
+clean_channel: 155/594 blocks, 0.3 minutes remaining.
+clean_channel: 156/594 blocks, 0.3 minutes remaining.
+clean_channel: 157/594 blocks, 0.3 minutes remaining.
+clean_channel: 158/594 blocks, 0.3 minutes remaining.
+clean_channel: 159/594 blocks, 0.3 minutes remaining.
+clean_channel: 160/594 blocks, 0.3 minutes remaining.
+clean_channel: 161/594 blocks, 0.3 minutes remaining.
+clean_channel: 162/594 blocks, 0.3 minutes remaining.
+clean_channel: 163/594 blocks, 0.3 minutes remaining.
+clean_channel: 164/594 blocks, 0.3 minutes remaining.
+clean_channel: 165/594 blocks, 0.3 minutes remaining.
+clean_channel: 166/594 blocks, 0.3 minutes remaining.
+clean_channel: 167/594 blocks, 0.3 minutes remaining.
+clean_channel: 168/594 blocks, 0.3 minutes remaining.
+clean_channel: 169/594 blocks, 0.3 minutes remaining.
+clean_channel: 170/594 blocks, 0.3 minutes remaining.
+clean_channel: 171/594 blocks, 0.3 minutes remaining.
+clean_channel: 172/594 blocks, 0.3 minutes remaining.
+clean_channel: 173/594 blocks, 0.3 minutes remaining.
+clean_channel: 174/594 blocks, 0.3 minutes remaining.
+clean_channel: 175/594 blocks, 0.3 minutes remaining.
+clean_channel: 176/594 blocks, 0.3 minutes remaining.
+clean_channel: 177/594 blocks, 0.3 minutes remaining.
+clean_channel: 178/594 blocks, 0.3 minutes remaining.
+clean_channel: 179/594 blocks, 0.3 minutes remaining.
+clean_channel: 180/594 blocks, 0.3 minutes remaining.
+clean_channel: 181/594 blocks, 0.3 minutes remaining.
+clean_channel: 182/594 blocks, 0.3 minutes remaining.
+clean_channel: 183/594 blocks, 0.3 minutes remaining.
+clean_channel: 184/594 blocks, 0.3 minutes remaining.
+clean_channel: 185/594 blocks, 0.3 minutes remaining.
+clean_channel: 186/594 blocks, 0.3 minutes remaining.
+clean_channel: 187/594 blocks, 0.3 minutes remaining.
+clean_channel: 188/594 blocks, 0.3 minutes remaining.
+clean_channel: 189/594 blocks, 0.3 minutes remaining.
+clean_channel: 190/594 blocks, 0.3 minutes remaining.
+clean_channel: 191/594 blocks, 0.3 minutes remaining.
+clean_channel: 192/594 blocks, 0.3 minutes remaining.
+clean_channel: 193/594 blocks, 0.3 minutes remaining.
+clean_channel: 194/594 blocks, 0.3 minutes remaining.
+clean_channel: 195/594 blocks, 0.3 minutes remaining.
+clean_channel: 196/594 blocks, 0.3 minutes remaining.
+clean_channel: 197/594 blocks, 0.3 minutes remaining.
+clean_channel: 198/594 blocks, 0.3 minutes remaining.
+clean_channel: 199/594 blocks, 0.3 minutes remaining.
+clean_channel: 200/594 blocks, 0.3 minutes remaining.
+clean_channel: 201/594 blocks, 0.3 minutes remaining.
+clean_channel: 202/594 blocks, 0.3 minutes remaining.
+clean_channel: 203/594 blocks, 0.3 minutes remaining.
+clean_channel: 204/594 blocks, 0.3 minutes remaining.
+clean_channel: 205/594 blocks, 0.3 minutes remaining.
+clean_channel: 206/594 blocks, 0.3 minutes remaining.
+clean_channel: 207/594 blocks, 0.3 minutes remaining.
+clean_channel: 208/594 blocks, 0.3 minutes remaining.
+clean_channel: 209/594 blocks, 0.3 minutes remaining.
+clean_channel: 210/594 blocks, 0.3 minutes remaining.
+clean_channel: 211/594 blocks, 0.3 minutes remaining.
+clean_channel: 212/594 blocks, 0.3 minutes remaining.
+clean_channel: 213/594 blocks, 0.3 minutes remaining.
+clean_channel: 214/594 blocks, 0.3 minutes remaining.
+clean_channel: 215/594 blocks, 0.3 minutes remaining.
+clean_channel: 216/594 blocks, 0.3 minutes remaining.
+clean_channel: 217/594 blocks, 0.3 minutes remaining.
+clean_channel: 218/594 blocks, 0.3 minutes remaining.
+clean_channel: 219/594 blocks, 0.3 minutes remaining.
+clean_channel: 220/594 blocks, 0.3 minutes remaining.
+clean_channel: 221/594 blocks, 0.3 minutes remaining.
+clean_channel: 222/594 blocks, 0.3 minutes remaining.
+clean_channel: 223/594 blocks, 0.3 minutes remaining.
+clean_channel: 224/594 blocks, 0.3 minutes remaining.
+clean_channel: 225/594 blocks, 0.3 minutes remaining.
+clean_channel: 226/594 blocks, 0.3 minutes remaining.
+clean_channel: 227/594 blocks, 0.3 minutes remaining.
+clean_channel: 228/594 blocks, 0.3 minutes remaining.
+clean_channel: 229/594 blocks, 0.3 minutes remaining.
+clean_channel: 230/594 blocks, 0.3 minutes remaining.
+clean_channel: 231/594 blocks, 0.3 minutes remaining.
+clean_channel: 232/594 blocks, 0.3 minutes remaining.
+clean_channel: 233/594 blocks, 0.3 minutes remaining.
+clean_channel: 234/594 blocks, 0.3 minutes remaining.
+clean_channel: 235/594 blocks, 0.3 minutes remaining.
+clean_channel: 236/594 blocks, 0.3 minutes remaining.
+clean_channel: 237/594 blocks, 0.3 minutes remaining.
+clean_channel: 238/594 blocks, 0.3 minutes remaining.
+clean_channel: 239/594 blocks, 0.3 minutes remaining.
+clean_channel: 240/594 blocks, 0.3 minutes remaining.
+clean_channel: 241/594 blocks, 0.3 minutes remaining.
+clean_channel: 242/594 blocks, 0.3 minutes remaining.
+clean_channel: 243/594 blocks, 0.3 minutes remaining.
+clean_channel: 244/594 blocks, 0.3 minutes remaining.
+clean_channel: 245/594 blocks, 0.3 minutes remaining.
+clean_channel: 246/594 blocks, 0.3 minutes remaining.
+clean_channel: 247/594 blocks, 0.3 minutes remaining.
+clean_channel: 248/594 blocks, 0.3 minutes remaining.
+clean_channel: 249/594 blocks, 0.3 minutes remaining.
+clean_channel: 250/594 blocks, 0.3 minutes remaining.
+clean_channel: 251/594 blocks, 0.3 minutes remaining.
+clean_channel: 252/594 blocks, 0.3 minutes remaining.
+clean_channel: 253/594 blocks, 0.3 minutes remaining.
+clean_channel: 254/594 blocks, 0.3 minutes remaining.
+clean_channel: 255/594 blocks, 0.3 minutes remaining.
+clean_channel: 256/594 blocks, 0.3 minutes remaining.
+clean_channel: 257/594 blocks, 0.3 minutes remaining.
+clean_channel: 258/594 blocks, 0.3 minutes remaining.
+clean_channel: 259/594 blocks, 0.3 minutes remaining.
+clean_channel: 260/594 blocks, 0.3 minutes remaining.
+clean_channel: 261/594 blocks, 0.3 minutes remaining.
+clean_channel: 262/594 blocks, 0.3 minutes remaining.
+clean_channel: 263/594 blocks, 0.3 minutes remaining.
+clean_channel: 264/594 blocks, 0.3 minutes remaining.
+clean_channel: 265/594 blocks, 0.3 minutes remaining.
+clean_channel: 266/594 blocks, 0.3 minutes remaining.
+clean_channel: 267/594 blocks, 0.3 minutes remaining.
+clean_channel: 268/594 blocks, 0.3 minutes remaining.
+clean_channel: 269/594 blocks, 0.3 minutes remaining.
+clean_channel: 270/594 blocks, 0.3 minutes remaining.
+clean_channel: 271/594 blocks, 0.2 minutes remaining.
+clean_channel: 272/594 blocks, 0.2 minutes remaining.
+clean_channel: 273/594 blocks, 0.2 minutes remaining.
+clean_channel: 274/594 blocks, 0.2 minutes remaining.
+clean_channel: 275/594 blocks, 0.2 minutes remaining.
+clean_channel: 276/594 blocks, 0.2 minutes remaining.
+clean_channel: 277/594 blocks, 0.2 minutes remaining.
+clean_channel: 278/594 blocks, 0.2 minutes remaining.
+clean_channel: 279/594 blocks, 0.2 minutes remaining.
+clean_channel: 280/594 blocks, 0.2 minutes remaining.
+clean_channel: 281/594 blocks, 0.2 minutes remaining.
+clean_channel: 282/594 blocks, 0.2 minutes remaining.
+clean_channel: 283/594 blocks, 0.2 minutes remaining.
+clean_channel: 284/594 blocks, 0.2 minutes remaining.
+clean_channel: 285/594 blocks, 0.2 minutes remaining.
+clean_channel: 286/594 blocks, 0.2 minutes remaining.
+clean_channel: 287/594 blocks, 0.2 minutes remaining.
+clean_channel: 288/594 blocks, 0.2 minutes remaining.
+clean_channel: 289/594 blocks, 0.2 minutes remaining.
+clean_channel: 290/594 blocks, 0.2 minutes remaining.
+clean_channel: 291/594 blocks, 0.2 minutes remaining.
+clean_channel: 292/594 blocks, 0.2 minutes remaining.
+clean_channel: 293/594 blocks, 0.2 minutes remaining.
+clean_channel: 294/594 blocks, 0.2 minutes remaining.
+clean_channel: 295/594 blocks, 0.2 minutes remaining.
+clean_channel: 296/594 blocks, 0.2 minutes remaining.
+clean_channel: 297/594 blocks, 0.2 minutes remaining.
+clean_channel: 298/594 blocks, 0.2 minutes remaining.
+clean_channel: 299/594 blocks, 0.2 minutes remaining.
+clean_channel: 300/594 blocks, 0.2 minutes remaining.
+clean_channel: 301/594 blocks, 0.2 minutes remaining.
+clean_channel: 302/594 blocks, 0.2 minutes remaining.
+clean_channel: 303/594 blocks, 0.2 minutes remaining.
+clean_channel: 304/594 blocks, 0.2 minutes remaining.
+clean_channel: 305/594 blocks, 0.2 minutes remaining.
+clean_channel: 306/594 blocks, 0.2 minutes remaining.
+clean_channel: 307/594 blocks, 0.2 minutes remaining.
+clean_channel: 308/594 blocks, 0.2 minutes remaining.
+clean_channel: 309/594 blocks, 0.2 minutes remaining.
+clean_channel: 310/594 blocks, 0.2 minutes remaining.
+clean_channel: 311/594 blocks, 0.2 minutes remaining.
+clean_channel: 312/594 blocks, 0.2 minutes remaining.
+clean_channel: 313/594 blocks, 0.2 minutes remaining.
+clean_channel: 314/594 blocks, 0.2 minutes remaining.
+clean_channel: 315/594 blocks, 0.2 minutes remaining.
+clean_channel: 316/594 blocks, 0.2 minutes remaining.
+clean_channel: 317/594 blocks, 0.2 minutes remaining.
+clean_channel: 318/594 blocks, 0.2 minutes remaining.
+clean_channel: 319/594 blocks, 0.2 minutes remaining.
+clean_channel: 320/594 blocks, 0.2 minutes remaining.
+clean_channel: 321/594 blocks, 0.2 minutes remaining.
+clean_channel: 322/594 blocks, 0.2 minutes remaining.
+clean_channel: 323/594 blocks, 0.2 minutes remaining.
+clean_channel: 324/594 blocks, 0.2 minutes remaining.
+clean_channel: 325/594 blocks, 0.2 minutes remaining.
+clean_channel: 326/594 blocks, 0.2 minutes remaining.
+clean_channel: 327/594 blocks, 0.2 minutes remaining.
+clean_channel: 328/594 blocks, 0.2 minutes remaining.
+clean_channel: 329/594 blocks, 0.2 minutes remaining.
+clean_channel: 330/594 blocks, 0.2 minutes remaining.
+clean_channel: 331/594 blocks, 0.2 minutes remaining.
+clean_channel: 332/594 blocks, 0.2 minutes remaining.
+clean_channel: 333/594 blocks, 0.2 minutes remaining.
+clean_channel: 334/594 blocks, 0.2 minutes remaining.
+clean_channel: 335/594 blocks, 0.2 minutes remaining.
+clean_channel: 336/594 blocks, 0.2 minutes remaining.
+clean_channel: 337/594 blocks, 0.2 minutes remaining.
+clean_channel: 338/594 blocks, 0.2 minutes remaining.
+clean_channel: 339/594 blocks, 0.2 minutes remaining.
+clean_channel: 340/594 blocks, 0.2 minutes remaining.
+clean_channel: 341/594 blocks, 0.2 minutes remaining.
+clean_channel: 342/594 blocks, 0.2 minutes remaining.
+clean_channel: 343/594 blocks, 0.2 minutes remaining.
+clean_channel: 344/594 blocks, 0.2 minutes remaining.
+clean_channel: 345/594 blocks, 0.2 minutes remaining.
+clean_channel: 346/594 blocks, 0.2 minutes remaining.
+clean_channel: 347/594 blocks, 0.2 minutes remaining.
+clean_channel: 348/594 blocks, 0.2 minutes remaining.
+clean_channel: 349/594 blocks, 0.2 minutes remaining.
+clean_channel: 350/594 blocks, 0.2 minutes remaining.
+clean_channel: 351/594 blocks, 0.2 minutes remaining.
+clean_channel: 352/594 blocks, 0.2 minutes remaining.
+clean_channel: 353/594 blocks, 0.2 minutes remaining.
+clean_channel: 354/594 blocks, 0.2 minutes remaining.
+clean_channel: 355/594 blocks, 0.2 minutes remaining.
+clean_channel: 356/594 blocks, 0.2 minutes remaining.
+clean_channel: 357/594 blocks, 0.2 minutes remaining.
+clean_channel: 358/594 blocks, 0.2 minutes remaining.
+clean_channel: 359/594 blocks, 0.2 minutes remaining.
+clean_channel: 360/594 blocks, 0.2 minutes remaining.
+clean_channel: 361/594 blocks, 0.2 minutes remaining.
+clean_channel: 362/594 blocks, 0.2 minutes remaining.
+clean_channel: 363/594 blocks, 0.2 minutes remaining.
+clean_channel: 364/594 blocks, 0.2 minutes remaining.
+clean_channel: 365/594 blocks, 0.2 minutes remaining.
+clean_channel: 366/594 blocks, 0.2 minutes remaining.
+clean_channel: 367/594 blocks, 0.2 minutes remaining.
+clean_channel: 368/594 blocks, 0.2 minutes remaining.
+clean_channel: 369/594 blocks, 0.2 minutes remaining.
+clean_channel: 370/594 blocks, 0.2 minutes remaining.
+clean_channel: 371/594 blocks, 0.2 minutes remaining.
+clean_channel: 372/594 blocks, 0.2 minutes remaining.
+clean_channel: 373/594 blocks, 0.2 minutes remaining.
+clean_channel: 374/594 blocks, 0.2 minutes remaining.
+clean_channel: 375/594 blocks, 0.2 minutes remaining.
+clean_channel: 376/594 blocks, 0.2 minutes remaining.
+clean_channel: 377/594 blocks, 0.2 minutes remaining.
+clean_channel: 378/594 blocks, 0.2 minutes remaining.
+clean_channel: 379/594 blocks, 0.2 minutes remaining.
+clean_channel: 380/594 blocks, 0.2 minutes remaining.
+clean_channel: 381/594 blocks, 0.2 minutes remaining.
+clean_channel: 382/594 blocks, 0.2 minutes remaining.
+clean_channel: 383/594 blocks, 0.2 minutes remaining.
+clean_channel: 384/594 blocks, 0.2 minutes remaining.
+clean_channel: 385/594 blocks, 0.2 minutes remaining.
+clean_channel: 386/594 blocks, 0.2 minutes remaining.
+clean_channel: 387/594 blocks, 0.2 minutes remaining.
+clean_channel: 388/594 blocks, 0.2 minutes remaining.
+clean_channel: 389/594 blocks, 0.2 minutes remaining.
+clean_channel: 390/594 blocks, 0.2 minutes remaining.
+clean_channel: 391/594 blocks, 0.2 minutes remaining.
+clean_channel: 392/594 blocks, 0.2 minutes remaining.
+clean_channel: 393/594 blocks, 0.2 minutes remaining.
+clean_channel: 394/594 blocks, 0.2 minutes remaining.
+clean_channel: 395/594 blocks, 0.2 minutes remaining.
+clean_channel: 396/594 blocks, 0.2 minutes remaining.
+clean_channel: 397/594 blocks, 0.2 minutes remaining.
+clean_channel: 398/594 blocks, 0.2 minutes remaining.
+clean_channel: 399/594 blocks, 0.2 minutes remaining.
+clean_channel: 400/594 blocks, 0.1 minutes remaining.
+clean_channel: 401/594 blocks, 0.1 minutes remaining.
+clean_channel: 402/594 blocks, 0.1 minutes remaining.
+clean_channel: 403/594 blocks, 0.1 minutes remaining.
+clean_channel: 404/594 blocks, 0.1 minutes remaining.
+clean_channel: 405/594 blocks, 0.1 minutes remaining.
+clean_channel: 406/594 blocks, 0.1 minutes remaining.
+clean_channel: 407/594 blocks, 0.1 minutes remaining.
+clean_channel: 408/594 blocks, 0.1 minutes remaining.
+clean_channel: 409/594 blocks, 0.1 minutes remaining.
+clean_channel: 410/594 blocks, 0.1 minutes remaining.
+clean_channel: 411/594 blocks, 0.1 minutes remaining.
+clean_channel: 412/594 blocks, 0.1 minutes remaining.
+clean_channel: 413/594 blocks, 0.1 minutes remaining.
+clean_channel: 414/594 blocks, 0.1 minutes remaining.
+clean_channel: 415/594 blocks, 0.1 minutes remaining.
+clean_channel: 416/594 blocks, 0.1 minutes remaining.
+clean_channel: 417/594 blocks, 0.1 minutes remaining.
+clean_channel: 418/594 blocks, 0.1 minutes remaining.
+clean_channel: 419/594 blocks, 0.1 minutes remaining.
+clean_channel: 420/594 blocks, 0.1 minutes remaining.
+clean_channel: 421/594 blocks, 0.1 minutes remaining.
+clean_channel: 422/594 blocks, 0.1 minutes remaining.
+clean_channel: 423/594 blocks, 0.1 minutes remaining.
+clean_channel: 424/594 blocks, 0.1 minutes remaining.
+clean_channel: 425/594 blocks, 0.1 minutes remaining.
+clean_channel: 426/594 blocks, 0.1 minutes remaining.
+clean_channel: 427/594 blocks, 0.1 minutes remaining.
+clean_channel: 428/594 blocks, 0.1 minutes remaining.
+clean_channel: 429/594 blocks, 0.1 minutes remaining.
+clean_channel: 430/594 blocks, 0.1 minutes remaining.
+clean_channel: 431/594 blocks, 0.1 minutes remaining.
+clean_channel: 432/594 blocks, 0.1 minutes remaining.
+clean_channel: 433/594 blocks, 0.1 minutes remaining.
+clean_channel: 434/594 blocks, 0.1 minutes remaining.
+clean_channel: 435/594 blocks, 0.1 minutes remaining.
+clean_channel: 436/594 blocks, 0.1 minutes remaining.
+clean_channel: 437/594 blocks, 0.1 minutes remaining.
+clean_channel: 438/594 blocks, 0.1 minutes remaining.
+clean_channel: 439/594 blocks, 0.1 minutes remaining.
+clean_channel: 440/594 blocks, 0.1 minutes remaining.
+clean_channel: 441/594 blocks, 0.1 minutes remaining.
+clean_channel: 442/594 blocks, 0.1 minutes remaining.
+clean_channel: 443/594 blocks, 0.1 minutes remaining.
+clean_channel: 444/594 blocks, 0.1 minutes remaining.
+clean_channel: 445/594 blocks, 0.1 minutes remaining.
+clean_channel: 446/594 blocks, 0.1 minutes remaining.
+clean_channel: 447/594 blocks, 0.1 minutes remaining.
+clean_channel: 448/594 blocks, 0.1 minutes remaining.
+clean_channel: 449/594 blocks, 0.1 minutes remaining.
+clean_channel: 450/594 blocks, 0.1 minutes remaining.
+clean_channel: 451/594 blocks, 0.1 minutes remaining.
+clean_channel: 452/594 blocks, 0.1 minutes remaining.
+clean_channel: 453/594 blocks, 0.1 minutes remaining.
+clean_channel: 454/594 blocks, 0.1 minutes remaining.
+clean_channel: 455/594 blocks, 0.1 minutes remaining.
+clean_channel: 456/594 blocks, 0.1 minutes remaining.
+clean_channel: 457/594 blocks, 0.1 minutes remaining.
+clean_channel: 458/594 blocks, 0.1 minutes remaining.
+clean_channel: 459/594 blocks, 0.1 minutes remaining.
+clean_channel: 460/594 blocks, 0.1 minutes remaining.
+clean_channel: 461/594 blocks, 0.1 minutes remaining.
+clean_channel: 462/594 blocks, 0.1 minutes remaining.
+clean_channel: 463/594 blocks, 0.1 minutes remaining.
+clean_channel: 464/594 blocks, 0.1 minutes remaining.
+clean_channel: 465/594 blocks, 0.1 minutes remaining.
+clean_channel: 466/594 blocks, 0.1 minutes remaining.
+clean_channel: 467/594 blocks, 0.1 minutes remaining.
+clean_channel: 468/594 blocks, 0.1 minutes remaining.
+clean_channel: 469/594 blocks, 0.1 minutes remaining.
+clean_channel: 470/594 blocks, 0.1 minutes remaining.
+clean_channel: 471/594 blocks, 0.1 minutes remaining.
+clean_channel: 472/594 blocks, 0.1 minutes remaining.
+clean_channel: 473/594 blocks, 0.1 minutes remaining.
+clean_channel: 474/594 blocks, 0.1 minutes remaining.
+clean_channel: 475/594 blocks, 0.1 minutes remaining.
+clean_channel: 476/594 blocks, 0.1 minutes remaining.
+clean_channel: 477/594 blocks, 0.1 minutes remaining.
+clean_channel: 478/594 blocks, 0.1 minutes remaining.
+clean_channel: 479/594 blocks, 0.1 minutes remaining.
+clean_channel: 480/594 blocks, 0.1 minutes remaining.
+clean_channel: 481/594 blocks, 0.1 minutes remaining.
+clean_channel: 482/594 blocks, 0.1 minutes remaining.
+clean_channel: 483/594 blocks, 0.1 minutes remaining.
+clean_channel: 484/594 blocks, 0.1 minutes remaining.
+clean_channel: 485/594 blocks, 0.1 minutes remaining.
+clean_channel: 486/594 blocks, 0.1 minutes remaining.
+clean_channel: 487/594 blocks, 0.1 minutes remaining.
+clean_channel: 488/594 blocks, 0.1 minutes remaining.
+clean_channel: 489/594 blocks, 0.1 minutes remaining.
+clean_channel: 490/594 blocks, 0.1 minutes remaining.
+clean_channel: 491/594 blocks, 0.1 minutes remaining.
+clean_channel: 492/594 blocks, 0.1 minutes remaining.
+clean_channel: 493/594 blocks, 0.1 minutes remaining.
+clean_channel: 494/594 blocks, 0.1 minutes remaining.
+clean_channel: 495/594 blocks, 0.1 minutes remaining.
+clean_channel: 496/594 blocks, 0.1 minutes remaining.
+clean_channel: 497/594 blocks, 0.1 minutes remaining.
+clean_channel: 498/594 blocks, 0.1 minutes remaining.
+clean_channel: 499/594 blocks, 0.1 minutes remaining.
+clean_channel: 500/594 blocks, 0.1 minutes remaining.
+clean_channel: 501/594 blocks, 0.1 minutes remaining.
+clean_channel: 502/594 blocks, 0.1 minutes remaining.
+clean_channel: 503/594 blocks, 0.1 minutes remaining.
+clean_channel: 504/594 blocks, 0.1 minutes remaining.
+clean_channel: 505/594 blocks, 0.1 minutes remaining.
+clean_channel: 506/594 blocks, 0.1 minutes remaining.
+clean_channel: 507/594 blocks, 0.1 minutes remaining.
+clean_channel: 508/594 blocks, 0.1 minutes remaining.
+clean_channel: 509/594 blocks, 0.1 minutes remaining.
+clean_channel: 510/594 blocks, 0.1 minutes remaining.
+clean_channel: 511/594 blocks, 0.1 minutes remaining.
+clean_channel: 512/594 blocks, 0.1 minutes remaining.
+clean_channel: 513/594 blocks, 0.1 minutes remaining.
+clean_channel: 514/594 blocks, 0.1 minutes remaining.
+clean_channel: 515/594 blocks, 0.1 minutes remaining.
+clean_channel: 516/594 blocks, 0.1 minutes remaining.
+clean_channel: 517/594 blocks, 0.1 minutes remaining.
+clean_channel: 518/594 blocks, 0.1 minutes remaining.
+clean_channel: 519/594 blocks, 0.1 minutes remaining.
+clean_channel: 520/594 blocks, 0.1 minutes remaining.
+clean_channel: 521/594 blocks, 0.1 minutes remaining.
+clean_channel: 522/594 blocks, 0.1 minutes remaining.
+clean_channel: 523/594 blocks, 0.1 minutes remaining.
+clean_channel: 524/594 blocks, 0.1 minutes remaining.
+clean_channel: 525/594 blocks, 0.1 minutes remaining.
+clean_channel: 526/594 blocks, 0.1 minutes remaining.
+clean_channel: 527/594 blocks, 0.1 minutes remaining.
+clean_channel: 528/594 blocks, 0.1 minutes remaining.
+clean_channel: 529/594 blocks, 0.1 minutes remaining.
+clean_channel: 530/594 blocks, 0.0 minutes remaining.
+clean_channel: 531/594 blocks, 0.0 minutes remaining.
+clean_channel: 532/594 blocks, 0.0 minutes remaining.
+clean_channel: 533/594 blocks, 0.0 minutes remaining.
+clean_channel: 534/594 blocks, 0.0 minutes remaining.
+clean_channel: 535/594 blocks, 0.0 minutes remaining.
+clean_channel: 536/594 blocks, 0.0 minutes remaining.
+clean_channel: 537/594 blocks, 0.0 minutes remaining.
+clean_channel: 538/594 blocks, 0.0 minutes remaining.
+clean_channel: 539/594 blocks, 0.0 minutes remaining.
+clean_channel: 540/594 blocks, 0.0 minutes remaining.
+clean_channel: 541/594 blocks, 0.0 minutes remaining.
+clean_channel: 542/594 blocks, 0.0 minutes remaining.
+clean_channel: 543/594 blocks, 0.0 minutes remaining.
+clean_channel: 544/594 blocks, 0.0 minutes remaining.
+clean_channel: 545/594 blocks, 0.0 minutes remaining.
+clean_channel: 546/594 blocks, 0.0 minutes remaining.
+clean_channel: 547/594 blocks, 0.0 minutes remaining.
+clean_channel: 548/594 blocks, 0.0 minutes remaining.
+clean_channel: 549/594 blocks, 0.0 minutes remaining.
+clean_channel: 550/594 blocks, 0.0 minutes remaining.
+clean_channel: 551/594 blocks, 0.0 minutes remaining.
+clean_channel: 552/594 blocks, 0.0 minutes remaining.
+clean_channel: 553/594 blocks, 0.0 minutes remaining.
+clean_channel: 554/594 blocks, 0.0 minutes remaining.
+clean_channel: 555/594 blocks, 0.0 minutes remaining.
+clean_channel: 556/594 blocks, 0.0 minutes remaining.
+clean_channel: 557/594 blocks, 0.0 minutes remaining.
+clean_channel: 558/594 blocks, 0.0 minutes remaining.
+clean_channel: 559/594 blocks, 0.0 minutes remaining.
+clean_channel: 560/594 blocks, 0.0 minutes remaining.
+clean_channel: 561/594 blocks, 0.0 minutes remaining.
+clean_channel: 562/594 blocks, 0.0 minutes remaining.
+clean_channel: 563/594 blocks, 0.0 minutes remaining.
+clean_channel: 564/594 blocks, 0.0 minutes remaining.
+clean_channel: 565/594 blocks, 0.0 minutes remaining.
+clean_channel: 566/594 blocks, 0.0 minutes remaining.
+clean_channel: 567/594 blocks, 0.0 minutes remaining.
+clean_channel: 568/594 blocks, 0.0 minutes remaining.
+clean_channel: 569/594 blocks, 0.0 minutes remaining.
+clean_channel: 570/594 blocks, 0.0 minutes remaining.
+clean_channel: 571/594 blocks, 0.0 minutes remaining.
+clean_channel: 572/594 blocks, 0.0 minutes remaining.
+clean_channel: 573/594 blocks, 0.0 minutes remaining.
+clean_channel: 574/594 blocks, 0.0 minutes remaining.
+clean_channel: 575/594 blocks, 0.0 minutes remaining.
+clean_channel: 576/594 blocks, 0.0 minutes remaining.
+clean_channel: 577/594 blocks, 0.0 minutes remaining.
+clean_channel: 578/594 blocks, 0.0 minutes remaining.
+clean_channel: 579/594 blocks, 0.0 minutes remaining.
+clean_channel: 580/594 blocks, 0.0 minutes remaining.
+clean_channel: 581/594 blocks, 0.0 minutes remaining.
+clean_channel: 582/594 blocks, 0.0 minutes remaining.
+clean_channel: 583/594 blocks, 0.0 minutes remaining.
+clean_channel: 584/594 blocks, 0.0 minutes remaining.
+clean_channel: 585/594 blocks, 0.0 minutes remaining.
+clean_channel: 586/594 blocks, 0.0 minutes remaining.
+clean_channel: 587/594 blocks, 0.0 minutes remaining.
+clean_channel: 588/594 blocks, 0.0 minutes remaining.
+clean_channel: 589/594 blocks, 0.0 minutes remaining.
+clean_channel: 590/594 blocks, 0.0 minutes remaining.
+clean_channel: 591/594 blocks, 0.0 minutes remaining.
+clean_channel: 592/594 blocks, 0.0 minutes remaining.
+clean_channel: 593/594 blocks, 0.0 minutes remaining.
 clean_channel: 594/594 blocks, 0.0 minutes remaining.
-Removing 1 channel(s)...
+Removing 2 channel(s)...
 Use vis_artifacts to compare the cleaned data to the original.
 Done.
 pop_eegfiltnew() - performing 827 point highpass filtering.
@@ -190,14 +780,756 @@ firfilt(): |====================| 100%, ETE 00:00
 Scanning for bad channels...
 clean_channel:   1/594 blocks, 0.5 minutes remaining.
 clean_channel:   2/594 blocks, 0.5 minutes remaining.
-...
+clean_channel:   3/594 blocks, 0.5 minutes remaining.
+clean_channel:   4/594 blocks, 0.5 minutes remaining.
+clean_channel:   5/594 blocks, 0.4 minutes remaining.
+clean_channel:   6/594 blocks, 0.4 minutes remaining.
+clean_channel:   7/594 blocks, 0.4 minutes remaining.
+clean_channel:   8/594 blocks, 0.4 minutes remaining.
+clean_channel:   9/594 blocks, 0.4 minutes remaining.
+clean_channel:  10/594 blocks, 0.4 minutes remaining.
+clean_channel:  11/594 blocks, 0.4 minutes remaining.
+clean_channel:  12/594 blocks, 0.4 minutes remaining.
+clean_channel:  13/594 blocks, 0.4 minutes remaining.
+clean_channel:  14/594 blocks, 0.4 minutes remaining.
+clean_channel:  15/594 blocks, 0.4 minutes remaining.
+clean_channel:  16/594 blocks, 0.4 minutes remaining.
+clean_channel:  17/594 blocks, 0.4 minutes remaining.
+clean_channel:  18/594 blocks, 0.4 minutes remaining.
+clean_channel:  19/594 blocks, 0.4 minutes remaining.
+clean_channel:  20/594 blocks, 0.4 minutes remaining.
+clean_channel:  21/594 blocks, 0.4 minutes remaining.
+clean_channel:  22/594 blocks, 0.4 minutes remaining.
+clean_channel:  23/594 blocks, 0.4 minutes remaining.
+clean_channel:  24/594 blocks, 0.4 minutes remaining.
+clean_channel:  25/594 blocks, 0.4 minutes remaining.
+clean_channel:  26/594 blocks, 0.4 minutes remaining.
+clean_channel:  27/594 blocks, 0.4 minutes remaining.
+clean_channel:  28/594 blocks, 0.4 minutes remaining.
+clean_channel:  29/594 blocks, 0.4 minutes remaining.
+clean_channel:  30/594 blocks, 0.4 minutes remaining.
+clean_channel:  31/594 blocks, 0.4 minutes remaining.
+clean_channel:  32/594 blocks, 0.4 minutes remaining.
+clean_channel:  33/594 blocks, 0.4 minutes remaining.
+clean_channel:  34/594 blocks, 0.4 minutes remaining.
+clean_channel:  35/594 blocks, 0.4 minutes remaining.
+clean_channel:  36/594 blocks, 0.4 minutes remaining.
+clean_channel:  37/594 blocks, 0.4 minutes remaining.
+clean_channel:  38/594 blocks, 0.4 minutes remaining.
+clean_channel:  39/594 blocks, 0.4 minutes remaining.
+clean_channel:  40/594 blocks, 0.4 minutes remaining.
+clean_channel:  41/594 blocks, 0.4 minutes remaining.
+clean_channel:  42/594 blocks, 0.4 minutes remaining.
+clean_channel:  43/594 blocks, 0.4 minutes remaining.
+clean_channel:  44/594 blocks, 0.4 minutes remaining.
+clean_channel:  45/594 blocks, 0.4 minutes remaining.
+clean_channel:  46/594 blocks, 0.4 minutes remaining.
+clean_channel:  47/594 blocks, 0.4 minutes remaining.
+clean_channel:  48/594 blocks, 0.4 minutes remaining.
+clean_channel:  49/594 blocks, 0.4 minutes remaining.
+clean_channel:  50/594 blocks, 0.4 minutes remaining.
+clean_channel:  51/594 blocks, 0.4 minutes remaining.
+clean_channel:  52/594 blocks, 0.4 minutes remaining.
+clean_channel:  53/594 blocks, 0.4 minutes remaining.
+clean_channel:  54/594 blocks, 0.4 minutes remaining.
+clean_channel:  55/594 blocks, 0.4 minutes remaining.
+clean_channel:  56/594 blocks, 0.4 minutes remaining.
+clean_channel:  57/594 blocks, 0.4 minutes remaining.
+clean_channel:  58/594 blocks, 0.4 minutes remaining.
+clean_channel:  59/594 blocks, 0.4 minutes remaining.
+clean_channel:  60/594 blocks, 0.4 minutes remaining.
+clean_channel:  61/594 blocks, 0.4 minutes remaining.
+clean_channel:  62/594 blocks, 0.4 minutes remaining.
+clean_channel:  63/594 blocks, 0.4 minutes remaining.
+clean_channel:  64/594 blocks, 0.4 minutes remaining.
+clean_channel:  65/594 blocks, 0.4 minutes remaining.
+clean_channel:  66/594 blocks, 0.4 minutes remaining.
+clean_channel:  67/594 blocks, 0.4 minutes remaining.
+clean_channel:  68/594 blocks, 0.4 minutes remaining.
+clean_channel:  69/594 blocks, 0.4 minutes remaining.
+clean_channel:  70/594 blocks, 0.4 minutes remaining.
+clean_channel:  71/594 blocks, 0.4 minutes remaining.
+clean_channel:  72/594 blocks, 0.4 minutes remaining.
+clean_channel:  73/594 blocks, 0.4 minutes remaining.
+clean_channel:  74/594 blocks, 0.4 minutes remaining.
+clean_channel:  75/594 blocks, 0.4 minutes remaining.
+clean_channel:  76/594 blocks, 0.4 minutes remaining.
+clean_channel:  77/594 blocks, 0.4 minutes remaining.
+clean_channel:  78/594 blocks, 0.4 minutes remaining.
+clean_channel:  79/594 blocks, 0.4 minutes remaining.
+clean_channel:  80/594 blocks, 0.4 minutes remaining.
+clean_channel:  81/594 blocks, 0.4 minutes remaining.
+clean_channel:  82/594 blocks, 0.4 minutes remaining.
+clean_channel:  83/594 blocks, 0.4 minutes remaining.
+clean_channel:  84/594 blocks, 0.4 minutes remaining.
+clean_channel:  85/594 blocks, 0.4 minutes remaining.
+clean_channel:  86/594 blocks, 0.4 minutes remaining.
+clean_channel:  87/594 blocks, 0.4 minutes remaining.
+clean_channel:  88/594 blocks, 0.4 minutes remaining.
+clean_channel:  89/594 blocks, 0.4 minutes remaining.
+clean_channel:  90/594 blocks, 0.4 minutes remaining.
+clean_channel:  91/594 blocks, 0.4 minutes remaining.
+clean_channel:  92/594 blocks, 0.4 minutes remaining.
+clean_channel:  93/594 blocks, 0.4 minutes remaining.
+clean_channel:  94/594 blocks, 0.4 minutes remaining.
+clean_channel:  95/594 blocks, 0.4 minutes remaining.
+clean_channel:  96/594 blocks, 0.4 minutes remaining.
+clean_channel:  97/594 blocks, 0.4 minutes remaining.
+clean_channel:  98/594 blocks, 0.4 minutes remaining.
+clean_channel:  99/594 blocks, 0.4 minutes remaining.
+clean_channel: 100/594 blocks, 0.4 minutes remaining.
+clean_channel: 101/594 blocks, 0.4 minutes remaining.
+clean_channel: 102/594 blocks, 0.4 minutes remaining.
+clean_channel: 103/594 blocks, 0.4 minutes remaining.
+clean_channel: 104/594 blocks, 0.4 minutes remaining.
+clean_channel: 105/594 blocks, 0.4 minutes remaining.
+clean_channel: 106/594 blocks, 0.4 minutes remaining.
+clean_channel: 107/594 blocks, 0.4 minutes remaining.
+clean_channel: 108/594 blocks, 0.4 minutes remaining.
+clean_channel: 109/594 blocks, 0.4 minutes remaining.
+clean_channel: 110/594 blocks, 0.4 minutes remaining.
+clean_channel: 111/594 blocks, 0.4 minutes remaining.
+clean_channel: 112/594 blocks, 0.4 minutes remaining.
+clean_channel: 113/594 blocks, 0.4 minutes remaining.
+clean_channel: 114/594 blocks, 0.4 minutes remaining.
+clean_channel: 115/594 blocks, 0.4 minutes remaining.
+clean_channel: 116/594 blocks, 0.4 minutes remaining.
+clean_channel: 117/594 blocks, 0.4 minutes remaining.
+clean_channel: 118/594 blocks, 0.4 minutes remaining.
+clean_channel: 119/594 blocks, 0.4 minutes remaining.
+clean_channel: 120/594 blocks, 0.4 minutes remaining.
+clean_channel: 121/594 blocks, 0.4 minutes remaining.
+clean_channel: 122/594 blocks, 0.4 minutes remaining.
+clean_channel: 123/594 blocks, 0.4 minutes remaining.
+clean_channel: 124/594 blocks, 0.4 minutes remaining.
+clean_channel: 125/594 blocks, 0.4 minutes remaining.
+clean_channel: 126/594 blocks, 0.4 minutes remaining.
+clean_channel: 127/594 blocks, 0.4 minutes remaining.
+clean_channel: 128/594 blocks, 0.4 minutes remaining.
+clean_channel: 129/594 blocks, 0.4 minutes remaining.
+clean_channel: 130/594 blocks, 0.4 minutes remaining.
+clean_channel: 131/594 blocks, 0.4 minutes remaining.
+clean_channel: 132/594 blocks, 0.4 minutes remaining.
+clean_channel: 133/594 blocks, 0.4 minutes remaining.
+clean_channel: 134/594 blocks, 0.4 minutes remaining.
+clean_channel: 135/594 blocks, 0.4 minutes remaining.
+clean_channel: 136/594 blocks, 0.4 minutes remaining.
+clean_channel: 137/594 blocks, 0.4 minutes remaining.
+clean_channel: 138/594 blocks, 0.4 minutes remaining.
+clean_channel: 139/594 blocks, 0.4 minutes remaining.
+clean_channel: 140/594 blocks, 0.3 minutes remaining.
+clean_channel: 141/594 blocks, 0.3 minutes remaining.
+clean_channel: 142/594 blocks, 0.3 minutes remaining.
+clean_channel: 143/594 blocks, 0.3 minutes remaining.
+clean_channel: 144/594 blocks, 0.3 minutes remaining.
+clean_channel: 145/594 blocks, 0.3 minutes remaining.
+clean_channel: 146/594 blocks, 0.3 minutes remaining.
+clean_channel: 147/594 blocks, 0.3 minutes remaining.
+clean_channel: 148/594 blocks, 0.3 minutes remaining.
+clean_channel: 149/594 blocks, 0.3 minutes remaining.
+clean_channel: 150/594 blocks, 0.3 minutes remaining.
+clean_channel: 151/594 blocks, 0.3 minutes remaining.
+clean_channel: 152/594 blocks, 0.3 minutes remaining.
+clean_channel: 153/594 blocks, 0.3 minutes remaining.
+clean_channel: 154/594 blocks, 0.3 minutes remaining.
+clean_channel: 155/594 blocks, 0.3 minutes remaining.
+clean_channel: 156/594 blocks, 0.3 minutes remaining.
+clean_channel: 157/594 blocks, 0.3 minutes remaining.
+clean_channel: 158/594 blocks, 0.3 minutes remaining.
+clean_channel: 159/594 blocks, 0.3 minutes remaining.
+clean_channel: 160/594 blocks, 0.3 minutes remaining.
+clean_channel: 161/594 blocks, 0.3 minutes remaining.
+clean_channel: 162/594 blocks, 0.3 minutes remaining.
+clean_channel: 163/594 blocks, 0.3 minutes remaining.
+clean_channel: 164/594 blocks, 0.3 minutes remaining.
+clean_channel: 165/594 blocks, 0.3 minutes remaining.
+clean_channel: 166/594 blocks, 0.3 minutes remaining.
+clean_channel: 167/594 blocks, 0.3 minutes remaining.
+clean_channel: 168/594 blocks, 0.3 minutes remaining.
+clean_channel: 169/594 blocks, 0.3 minutes remaining.
+clean_channel: 170/594 blocks, 0.3 minutes remaining.
+clean_channel: 171/594 blocks, 0.3 minutes remaining.
+clean_channel: 172/594 blocks, 0.3 minutes remaining.
+clean_channel: 173/594 blocks, 0.3 minutes remaining.
+clean_channel: 174/594 blocks, 0.3 minutes remaining.
+clean_channel: 175/594 blocks, 0.3 minutes remaining.
+clean_channel: 176/594 blocks, 0.3 minutes remaining.
+clean_channel: 177/594 blocks, 0.3 minutes remaining.
+clean_channel: 178/594 blocks, 0.3 minutes remaining.
+clean_channel: 179/594 blocks, 0.3 minutes remaining.
+clean_channel: 180/594 blocks, 0.3 minutes remaining.
+clean_channel: 181/594 blocks, 0.3 minutes remaining.
+clean_channel: 182/594 blocks, 0.3 minutes remaining.
+clean_channel: 183/594 blocks, 0.3 minutes remaining.
+clean_channel: 184/594 blocks, 0.3 minutes remaining.
+clean_channel: 185/594 blocks, 0.3 minutes remaining.
+clean_channel: 186/594 blocks, 0.3 minutes remaining.
+clean_channel: 187/594 blocks, 0.3 minutes remaining.
+clean_channel: 188/594 blocks, 0.3 minutes remaining.
+clean_channel: 189/594 blocks, 0.3 minutes remaining.
+clean_channel: 190/594 blocks, 0.3 minutes remaining.
+clean_channel: 191/594 blocks, 0.3 minutes remaining.
+clean_channel: 192/594 blocks, 0.3 minutes remaining.
+clean_channel: 193/594 blocks, 0.3 minutes remaining.
+clean_channel: 194/594 blocks, 0.3 minutes remaining.
+clean_channel: 195/594 blocks, 0.3 minutes remaining.
+clean_channel: 196/594 blocks, 0.3 minutes remaining.
+clean_channel: 197/594 blocks, 0.3 minutes remaining.
+clean_channel: 198/594 blocks, 0.3 minutes remaining.
+clean_channel: 199/594 blocks, 0.3 minutes remaining.
+clean_channel: 200/594 blocks, 0.3 minutes remaining.
+clean_channel: 201/594 blocks, 0.3 minutes remaining.
+clean_channel: 202/594 blocks, 0.3 minutes remaining.
+clean_channel: 203/594 blocks, 0.3 minutes remaining.
+clean_channel: 204/594 blocks, 0.3 minutes remaining.
+clean_channel: 205/594 blocks, 0.3 minutes remaining.
+clean_channel: 206/594 blocks, 0.3 minutes remaining.
+clean_channel: 207/594 blocks, 0.3 minutes remaining.
+clean_channel: 208/594 blocks, 0.3 minutes remaining.
+clean_channel: 209/594 blocks, 0.3 minutes remaining.
+clean_channel: 210/594 blocks, 0.3 minutes remaining.
+clean_channel: 211/594 blocks, 0.3 minutes remaining.
+clean_channel: 212/594 blocks, 0.3 minutes remaining.
+clean_channel: 213/594 blocks, 0.3 minutes remaining.
+clean_channel: 214/594 blocks, 0.3 minutes remaining.
+clean_channel: 215/594 blocks, 0.3 minutes remaining.
+clean_channel: 216/594 blocks, 0.3 minutes remaining.
+clean_channel: 217/594 blocks, 0.3 minutes remaining.
+clean_channel: 218/594 blocks, 0.3 minutes remaining.
+clean_channel: 219/594 blocks, 0.3 minutes remaining.
+clean_channel: 220/594 blocks, 0.3 minutes remaining.
+clean_channel: 221/594 blocks, 0.3 minutes remaining.
+clean_channel: 222/594 blocks, 0.3 minutes remaining.
+clean_channel: 223/594 blocks, 0.3 minutes remaining.
+clean_channel: 224/594 blocks, 0.3 minutes remaining.
+clean_channel: 225/594 blocks, 0.3 minutes remaining.
+clean_channel: 226/594 blocks, 0.3 minutes remaining.
+clean_channel: 227/594 blocks, 0.3 minutes remaining.
+clean_channel: 228/594 blocks, 0.3 minutes remaining.
+clean_channel: 229/594 blocks, 0.3 minutes remaining.
+clean_channel: 230/594 blocks, 0.3 minutes remaining.
+clean_channel: 231/594 blocks, 0.3 minutes remaining.
+clean_channel: 232/594 blocks, 0.3 minutes remaining.
+clean_channel: 233/594 blocks, 0.3 minutes remaining.
+clean_channel: 234/594 blocks, 0.3 minutes remaining.
+clean_channel: 235/594 blocks, 0.3 minutes remaining.
+clean_channel: 236/594 blocks, 0.3 minutes remaining.
+clean_channel: 237/594 blocks, 0.3 minutes remaining.
+clean_channel: 238/594 blocks, 0.3 minutes remaining.
+clean_channel: 239/594 blocks, 0.3 minutes remaining.
+clean_channel: 240/594 blocks, 0.3 minutes remaining.
+clean_channel: 241/594 blocks, 0.3 minutes remaining.
+clean_channel: 242/594 blocks, 0.3 minutes remaining.
+clean_channel: 243/594 blocks, 0.3 minutes remaining.
+clean_channel: 244/594 blocks, 0.3 minutes remaining.
+clean_channel: 245/594 blocks, 0.3 minutes remaining.
+clean_channel: 246/594 blocks, 0.3 minutes remaining.
+clean_channel: 247/594 blocks, 0.3 minutes remaining.
+clean_channel: 248/594 blocks, 0.3 minutes remaining.
+clean_channel: 249/594 blocks, 0.3 minutes remaining.
+clean_channel: 250/594 blocks, 0.3 minutes remaining.
+clean_channel: 251/594 blocks, 0.3 minutes remaining.
+clean_channel: 252/594 blocks, 0.3 minutes remaining.
+clean_channel: 253/594 blocks, 0.3 minutes remaining.
+clean_channel: 254/594 blocks, 0.3 minutes remaining.
+clean_channel: 255/594 blocks, 0.3 minutes remaining.
+clean_channel: 256/594 blocks, 0.3 minutes remaining.
+clean_channel: 257/594 blocks, 0.3 minutes remaining.
+clean_channel: 258/594 blocks, 0.3 minutes remaining.
+clean_channel: 259/594 blocks, 0.3 minutes remaining.
+clean_channel: 260/594 blocks, 0.3 minutes remaining.
+clean_channel: 261/594 blocks, 0.3 minutes remaining.
+clean_channel: 262/594 blocks, 0.3 minutes remaining.
+clean_channel: 263/594 blocks, 0.3 minutes remaining.
+clean_channel: 264/594 blocks, 0.3 minutes remaining.
+clean_channel: 265/594 blocks, 0.3 minutes remaining.
+clean_channel: 266/594 blocks, 0.3 minutes remaining.
+clean_channel: 267/594 blocks, 0.3 minutes remaining.
+clean_channel: 268/594 blocks, 0.3 minutes remaining.
+clean_channel: 269/594 blocks, 0.3 minutes remaining.
+clean_channel: 270/594 blocks, 0.3 minutes remaining.
+clean_channel: 271/594 blocks, 0.2 minutes remaining.
+clean_channel: 272/594 blocks, 0.2 minutes remaining.
+clean_channel: 273/594 blocks, 0.2 minutes remaining.
+clean_channel: 274/594 blocks, 0.2 minutes remaining.
+clean_channel: 275/594 blocks, 0.2 minutes remaining.
+clean_channel: 276/594 blocks, 0.2 minutes remaining.
+clean_channel: 277/594 blocks, 0.2 minutes remaining.
+clean_channel: 278/594 blocks, 0.2 minutes remaining.
+clean_channel: 279/594 blocks, 0.2 minutes remaining.
+clean_channel: 280/594 blocks, 0.2 minutes remaining.
+clean_channel: 281/594 blocks, 0.2 minutes remaining.
+clean_channel: 282/594 blocks, 0.2 minutes remaining.
+clean_channel: 283/594 blocks, 0.2 minutes remaining.
+clean_channel: 284/594 blocks, 0.2 minutes remaining.
+clean_channel: 285/594 blocks, 0.2 minutes remaining.
+clean_channel: 286/594 blocks, 0.2 minutes remaining.
+clean_channel: 287/594 blocks, 0.2 minutes remaining.
+clean_channel: 288/594 blocks, 0.2 minutes remaining.
+clean_channel: 289/594 blocks, 0.2 minutes remaining.
+clean_channel: 290/594 blocks, 0.2 minutes remaining.
+clean_channel: 291/594 blocks, 0.2 minutes remaining.
+clean_channel: 292/594 blocks, 0.2 minutes remaining.
+clean_channel: 293/594 blocks, 0.2 minutes remaining.
+clean_channel: 294/594 blocks, 0.2 minutes remaining.
+clean_channel: 295/594 blocks, 0.2 minutes remaining.
+clean_channel: 296/594 blocks, 0.2 minutes remaining.
+clean_channel: 297/594 blocks, 0.2 minutes remaining.
+clean_channel: 298/594 blocks, 0.2 minutes remaining.
+clean_channel: 299/594 blocks, 0.2 minutes remaining.
+clean_channel: 300/594 blocks, 0.2 minutes remaining.
+clean_channel: 301/594 blocks, 0.2 minutes remaining.
+clean_channel: 302/594 blocks, 0.2 minutes remaining.
+clean_channel: 303/594 blocks, 0.2 minutes remaining.
+clean_channel: 304/594 blocks, 0.2 minutes remaining.
+clean_channel: 305/594 blocks, 0.2 minutes remaining.
+clean_channel: 306/594 blocks, 0.2 minutes remaining.
+clean_channel: 307/594 blocks, 0.2 minutes remaining.
+clean_channel: 308/594 blocks, 0.2 minutes remaining.
+clean_channel: 309/594 blocks, 0.2 minutes remaining.
+clean_channel: 310/594 blocks, 0.2 minutes remaining.
+clean_channel: 311/594 blocks, 0.2 minutes remaining.
+clean_channel: 312/594 blocks, 0.2 minutes remaining.
+clean_channel: 313/594 blocks, 0.2 minutes remaining.
+clean_channel: 314/594 blocks, 0.2 minutes remaining.
+clean_channel: 315/594 blocks, 0.2 minutes remaining.
+clean_channel: 316/594 blocks, 0.2 minutes remaining.
+clean_channel: 317/594 blocks, 0.2 minutes remaining.
+clean_channel: 318/594 blocks, 0.2 minutes remaining.
+clean_channel: 319/594 blocks, 0.2 minutes remaining.
+clean_channel: 320/594 blocks, 0.2 minutes remaining.
+clean_channel: 321/594 blocks, 0.2 minutes remaining.
+clean_channel: 322/594 blocks, 0.2 minutes remaining.
+clean_channel: 323/594 blocks, 0.2 minutes remaining.
+clean_channel: 324/594 blocks, 0.2 minutes remaining.
+clean_channel: 325/594 blocks, 0.2 minutes remaining.
+clean_channel: 326/594 blocks, 0.2 minutes remaining.
+clean_channel: 327/594 blocks, 0.2 minutes remaining.
+clean_channel: 328/594 blocks, 0.2 minutes remaining.
+clean_channel: 329/594 blocks, 0.2 minutes remaining.
+clean_channel: 330/594 blocks, 0.2 minutes remaining.
+clean_channel: 331/594 blocks, 0.2 minutes remaining.
+clean_channel: 332/594 blocks, 0.2 minutes remaining.
+clean_channel: 333/594 blocks, 0.2 minutes remaining.
+clean_channel: 334/594 blocks, 0.2 minutes remaining.
+clean_channel: 335/594 blocks, 0.2 minutes remaining.
+clean_channel: 336/594 blocks, 0.2 minutes remaining.
+clean_channel: 337/594 blocks, 0.2 minutes remaining.
+clean_channel: 338/594 blocks, 0.2 minutes remaining.
+clean_channel: 339/594 blocks, 0.2 minutes remaining.
+clean_channel: 340/594 blocks, 0.2 minutes remaining.
+clean_channel: 341/594 blocks, 0.2 minutes remaining.
+clean_channel: 342/594 blocks, 0.2 minutes remaining.
+clean_channel: 343/594 blocks, 0.2 minutes remaining.
+clean_channel: 344/594 blocks, 0.2 minutes remaining.
+clean_channel: 345/594 blocks, 0.2 minutes remaining.
+clean_channel: 346/594 blocks, 0.2 minutes remaining.
+clean_channel: 347/594 blocks, 0.2 minutes remaining.
+clean_channel: 348/594 blocks, 0.2 minutes remaining.
+clean_channel: 349/594 blocks, 0.2 minutes remaining.
+clean_channel: 350/594 blocks, 0.2 minutes remaining.
+clean_channel: 351/594 blocks, 0.2 minutes remaining.
+clean_channel: 352/594 blocks, 0.2 minutes remaining.
+clean_channel: 353/594 blocks, 0.2 minutes remaining.
+clean_channel: 354/594 blocks, 0.2 minutes remaining.
+clean_channel: 355/594 blocks, 0.2 minutes remaining.
+clean_channel: 356/594 blocks, 0.2 minutes remaining.
+clean_channel: 357/594 blocks, 0.2 minutes remaining.
+clean_channel: 358/594 blocks, 0.2 minutes remaining.
+clean_channel: 359/594 blocks, 0.2 minutes remaining.
+clean_channel: 360/594 blocks, 0.2 minutes remaining.
+clean_channel: 361/594 blocks, 0.2 minutes remaining.
+clean_channel: 362/594 blocks, 0.2 minutes remaining.
+clean_channel: 363/594 blocks, 0.2 minutes remaining.
+clean_channel: 364/594 blocks, 0.2 minutes remaining.
+clean_channel: 365/594 blocks, 0.2 minutes remaining.
+clean_channel: 366/594 blocks, 0.2 minutes remaining.
+clean_channel: 367/594 blocks, 0.2 minutes remaining.
+clean_channel: 368/594 blocks, 0.2 minutes remaining.
+clean_channel: 369/594 blocks, 0.2 minutes remaining.
+clean_channel: 370/594 blocks, 0.2 minutes remaining.
+clean_channel: 371/594 blocks, 0.2 minutes remaining.
+clean_channel: 372/594 blocks, 0.2 minutes remaining.
+clean_channel: 373/594 blocks, 0.2 minutes remaining.
+clean_channel: 374/594 blocks, 0.2 minutes remaining.
+clean_channel: 375/594 blocks, 0.2 minutes remaining.
+clean_channel: 376/594 blocks, 0.2 minutes remaining.
+clean_channel: 377/594 blocks, 0.2 minutes remaining.
+clean_channel: 378/594 blocks, 0.2 minutes remaining.
+clean_channel: 379/594 blocks, 0.2 minutes remaining.
+clean_channel: 380/594 blocks, 0.2 minutes remaining.
+clean_channel: 381/594 blocks, 0.2 minutes remaining.
+clean_channel: 382/594 blocks, 0.2 minutes remaining.
+clean_channel: 383/594 blocks, 0.2 minutes remaining.
+clean_channel: 384/594 blocks, 0.2 minutes remaining.
+clean_channel: 385/594 blocks, 0.2 minutes remaining.
+clean_channel: 386/594 blocks, 0.2 minutes remaining.
+clean_channel: 387/594 blocks, 0.2 minutes remaining.
+clean_channel: 388/594 blocks, 0.2 minutes remaining.
+clean_channel: 389/594 blocks, 0.2 minutes remaining.
+clean_channel: 390/594 blocks, 0.2 minutes remaining.
+clean_channel: 391/594 blocks, 0.2 minutes remaining.
+clean_channel: 392/594 blocks, 0.2 minutes remaining.
+clean_channel: 393/594 blocks, 0.2 minutes remaining.
+clean_channel: 394/594 blocks, 0.2 minutes remaining.
+clean_channel: 395/594 blocks, 0.2 minutes remaining.
+clean_channel: 396/594 blocks, 0.2 minutes remaining.
+clean_channel: 397/594 blocks, 0.2 minutes remaining.
+clean_channel: 398/594 blocks, 0.2 minutes remaining.
+clean_channel: 399/594 blocks, 0.2 minutes remaining.
+clean_channel: 400/594 blocks, 0.1 minutes remaining.
+clean_channel: 401/594 blocks, 0.1 minutes remaining.
+clean_channel: 402/594 blocks, 0.1 minutes remaining.
+clean_channel: 403/594 blocks, 0.1 minutes remaining.
+clean_channel: 404/594 blocks, 0.1 minutes remaining.
+clean_channel: 405/594 blocks, 0.1 minutes remaining.
+clean_channel: 406/594 blocks, 0.1 minutes remaining.
+clean_channel: 407/594 blocks, 0.1 minutes remaining.
+clean_channel: 408/594 blocks, 0.1 minutes remaining.
+clean_channel: 409/594 blocks, 0.1 minutes remaining.
+clean_channel: 410/594 blocks, 0.1 minutes remaining.
+clean_channel: 411/594 blocks, 0.1 minutes remaining.
+clean_channel: 412/594 blocks, 0.1 minutes remaining.
+clean_channel: 413/594 blocks, 0.1 minutes remaining.
+clean_channel: 414/594 blocks, 0.1 minutes remaining.
+clean_channel: 415/594 blocks, 0.1 minutes remaining.
+clean_channel: 416/594 blocks, 0.1 minutes remaining.
+clean_channel: 417/594 blocks, 0.1 minutes remaining.
+clean_channel: 418/594 blocks, 0.1 minutes remaining.
+clean_channel: 419/594 blocks, 0.1 minutes remaining.
+clean_channel: 420/594 blocks, 0.1 minutes remaining.
+clean_channel: 421/594 blocks, 0.1 minutes remaining.
+clean_channel: 422/594 blocks, 0.1 minutes remaining.
+clean_channel: 423/594 blocks, 0.1 minutes remaining.
+clean_channel: 424/594 blocks, 0.1 minutes remaining.
+clean_channel: 425/594 blocks, 0.1 minutes remaining.
+clean_channel: 426/594 blocks, 0.1 minutes remaining.
+clean_channel: 427/594 blocks, 0.1 minutes remaining.
+clean_channel: 428/594 blocks, 0.1 minutes remaining.
+clean_channel: 429/594 blocks, 0.1 minutes remaining.
+clean_channel: 430/594 blocks, 0.1 minutes remaining.
+clean_channel: 431/594 blocks, 0.1 minutes remaining.
+clean_channel: 432/594 blocks, 0.1 minutes remaining.
+clean_channel: 433/594 blocks, 0.1 minutes remaining.
+clean_channel: 434/594 blocks, 0.1 minutes remaining.
+clean_channel: 435/594 blocks, 0.1 minutes remaining.
+clean_channel: 436/594 blocks, 0.1 minutes remaining.
+clean_channel: 437/594 blocks, 0.1 minutes remaining.
+clean_channel: 438/594 blocks, 0.1 minutes remaining.
+clean_channel: 439/594 blocks, 0.1 minutes remaining.
+clean_channel: 440/594 blocks, 0.1 minutes remaining.
+clean_channel: 441/594 blocks, 0.1 minutes remaining.
+clean_channel: 442/594 blocks, 0.1 minutes remaining.
+clean_channel: 443/594 blocks, 0.1 minutes remaining.
+clean_channel: 444/594 blocks, 0.1 minutes remaining.
+clean_channel: 445/594 blocks, 0.1 minutes remaining.
+clean_channel: 446/594 blocks, 0.1 minutes remaining.
+clean_channel: 447/594 blocks, 0.1 minutes remaining.
+clean_channel: 448/594 blocks, 0.1 minutes remaining.
+clean_channel: 449/594 blocks, 0.1 minutes remaining.
+clean_channel: 450/594 blocks, 0.1 minutes remaining.
+clean_channel: 451/594 blocks, 0.1 minutes remaining.
+clean_channel: 452/594 blocks, 0.1 minutes remaining.
+clean_channel: 453/594 blocks, 0.1 minutes remaining.
+clean_channel: 454/594 blocks, 0.1 minutes remaining.
+clean_channel: 455/594 blocks, 0.1 minutes remaining.
+clean_channel: 456/594 blocks, 0.1 minutes remaining.
+clean_channel: 457/594 blocks, 0.1 minutes remaining.
+clean_channel: 458/594 blocks, 0.1 minutes remaining.
+clean_channel: 459/594 blocks, 0.1 minutes remaining.
+clean_channel: 460/594 blocks, 0.1 minutes remaining.
+clean_channel: 461/594 blocks, 0.1 minutes remaining.
+clean_channel: 462/594 blocks, 0.1 minutes remaining.
+clean_channel: 463/594 blocks, 0.1 minutes remaining.
+clean_channel: 464/594 blocks, 0.1 minutes remaining.
+clean_channel: 465/594 blocks, 0.1 minutes remaining.
+clean_channel: 466/594 blocks, 0.1 minutes remaining.
+clean_channel: 467/594 blocks, 0.1 minutes remaining.
+clean_channel: 468/594 blocks, 0.1 minutes remaining.
+clean_channel: 469/594 blocks, 0.1 minutes remaining.
+clean_channel: 470/594 blocks, 0.1 minutes remaining.
+clean_channel: 471/594 blocks, 0.1 minutes remaining.
+clean_channel: 472/594 blocks, 0.1 minutes remaining.
+clean_channel: 473/594 blocks, 0.1 minutes remaining.
+clean_channel: 474/594 blocks, 0.1 minutes remaining.
+clean_channel: 475/594 blocks, 0.1 minutes remaining.
+clean_channel: 476/594 blocks, 0.1 minutes remaining.
+clean_channel: 477/594 blocks, 0.1 minutes remaining.
+clean_channel: 478/594 blocks, 0.1 minutes remaining.
+clean_channel: 479/594 blocks, 0.1 minutes remaining.
+clean_channel: 480/594 blocks, 0.1 minutes remaining.
+clean_channel: 481/594 blocks, 0.1 minutes remaining.
+clean_channel: 482/594 blocks, 0.1 minutes remaining.
+clean_channel: 483/594 blocks, 0.1 minutes remaining.
+clean_channel: 484/594 blocks, 0.1 minutes remaining.
+clean_channel: 485/594 blocks, 0.1 minutes remaining.
+clean_channel: 486/594 blocks, 0.1 minutes remaining.
+clean_channel: 487/594 blocks, 0.1 minutes remaining.
+clean_channel: 488/594 blocks, 0.1 minutes remaining.
+clean_channel: 489/594 blocks, 0.1 minutes remaining.
+clean_channel: 490/594 blocks, 0.1 minutes remaining.
+clean_channel: 491/594 blocks, 0.1 minutes remaining.
+clean_channel: 492/594 blocks, 0.1 minutes remaining.
+clean_channel: 493/594 blocks, 0.1 minutes remaining.
+clean_channel: 494/594 blocks, 0.1 minutes remaining.
+clean_channel: 495/594 blocks, 0.1 minutes remaining.
+clean_channel: 496/594 blocks, 0.1 minutes remaining.
+clean_channel: 497/594 blocks, 0.1 minutes remaining.
+clean_channel: 498/594 blocks, 0.1 minutes remaining.
+clean_channel: 499/594 blocks, 0.1 minutes remaining.
+clean_channel: 500/594 blocks, 0.1 minutes remaining.
+clean_channel: 501/594 blocks, 0.1 minutes remaining.
+clean_channel: 502/594 blocks, 0.1 minutes remaining.
+clean_channel: 503/594 blocks, 0.1 minutes remaining.
+clean_channel: 504/594 blocks, 0.1 minutes remaining.
+clean_channel: 505/594 blocks, 0.1 minutes remaining.
+clean_channel: 506/594 blocks, 0.1 minutes remaining.
+clean_channel: 507/594 blocks, 0.1 minutes remaining.
+clean_channel: 508/594 blocks, 0.1 minutes remaining.
+clean_channel: 509/594 blocks, 0.1 minutes remaining.
+clean_channel: 510/594 blocks, 0.1 minutes remaining.
+clean_channel: 511/594 blocks, 0.1 minutes remaining.
+clean_channel: 512/594 blocks, 0.1 minutes remaining.
+clean_channel: 513/594 blocks, 0.1 minutes remaining.
+clean_channel: 514/594 blocks, 0.1 minutes remaining.
+clean_channel: 515/594 blocks, 0.1 minutes remaining.
+clean_channel: 516/594 blocks, 0.1 minutes remaining.
+clean_channel: 517/594 blocks, 0.1 minutes remaining.
+clean_channel: 518/594 blocks, 0.1 minutes remaining.
+clean_channel: 519/594 blocks, 0.1 minutes remaining.
+clean_channel: 520/594 blocks, 0.1 minutes remaining.
+clean_channel: 521/594 blocks, 0.1 minutes remaining.
+clean_channel: 522/594 blocks, 0.1 minutes remaining.
+clean_channel: 523/594 blocks, 0.1 minutes remaining.
+clean_channel: 524/594 blocks, 0.1 minutes remaining.
+clean_channel: 525/594 blocks, 0.1 minutes remaining.
+clean_channel: 526/594 blocks, 0.1 minutes remaining.
+clean_channel: 527/594 blocks, 0.1 minutes remaining.
+clean_channel: 528/594 blocks, 0.1 minutes remaining.
+clean_channel: 529/594 blocks, 0.1 minutes remaining.
+clean_channel: 530/594 blocks, 0.0 minutes remaining.
+clean_channel: 531/594 blocks, 0.0 minutes remaining.
+clean_channel: 532/594 blocks, 0.0 minutes remaining.
+clean_channel: 533/594 blocks, 0.0 minutes remaining.
+clean_channel: 534/594 blocks, 0.0 minutes remaining.
+clean_channel: 535/594 blocks, 0.0 minutes remaining.
+clean_channel: 536/594 blocks, 0.0 minutes remaining.
+clean_channel: 537/594 blocks, 0.0 minutes remaining.
+clean_channel: 538/594 blocks, 0.0 minutes remaining.
+clean_channel: 539/594 blocks, 0.0 minutes remaining.
+clean_channel: 540/594 blocks, 0.0 minutes remaining.
+clean_channel: 541/594 blocks, 0.0 minutes remaining.
+clean_channel: 542/594 blocks, 0.0 minutes remaining.
+clean_channel: 543/594 blocks, 0.0 minutes remaining.
+clean_channel: 544/594 blocks, 0.0 minutes remaining.
+clean_channel: 545/594 blocks, 0.0 minutes remaining.
+clean_channel: 546/594 blocks, 0.0 minutes remaining.
+clean_channel: 547/594 blocks, 0.0 minutes remaining.
+clean_channel: 548/594 blocks, 0.0 minutes remaining.
+clean_channel: 549/594 blocks, 0.0 minutes remaining.
+clean_channel: 550/594 blocks, 0.0 minutes remaining.
+clean_channel: 551/594 blocks, 0.0 minutes remaining.
+clean_channel: 552/594 blocks, 0.0 minutes remaining.
+clean_channel: 553/594 blocks, 0.0 minutes remaining.
+clean_channel: 554/594 blocks, 0.0 minutes remaining.
+clean_channel: 555/594 blocks, 0.0 minutes remaining.
+clean_channel: 556/594 blocks, 0.0 minutes remaining.
+clean_channel: 557/594 blocks, 0.0 minutes remaining.
+clean_channel: 558/594 blocks, 0.0 minutes remaining.
+clean_channel: 559/594 blocks, 0.0 minutes remaining.
+clean_channel: 560/594 blocks, 0.0 minutes remaining.
+clean_channel: 561/594 blocks, 0.0 minutes remaining.
+clean_channel: 562/594 blocks, 0.0 minutes remaining.
+clean_channel: 563/594 blocks, 0.0 minutes remaining.
+clean_channel: 564/594 blocks, 0.0 minutes remaining.
+clean_channel: 565/594 blocks, 0.0 minutes remaining.
+clean_channel: 566/594 blocks, 0.0 minutes remaining.
+clean_channel: 567/594 blocks, 0.0 minutes remaining.
+clean_channel: 568/594 blocks, 0.0 minutes remaining.
+clean_channel: 569/594 blocks, 0.0 minutes remaining.
+clean_channel: 570/594 blocks, 0.0 minutes remaining.
+clean_channel: 571/594 blocks, 0.0 minutes remaining.
+clean_channel: 572/594 blocks, 0.0 minutes remaining.
+clean_channel: 573/594 blocks, 0.0 minutes remaining.
+clean_channel: 574/594 blocks, 0.0 minutes remaining.
+clean_channel: 575/594 blocks, 0.0 minutes remaining.
+clean_channel: 576/594 blocks, 0.0 minutes remaining.
+clean_channel: 577/594 blocks, 0.0 minutes remaining.
+clean_channel: 578/594 blocks, 0.0 minutes remaining.
+clean_channel: 579/594 blocks, 0.0 minutes remaining.
+clean_channel: 580/594 blocks, 0.0 minutes remaining.
+clean_channel: 581/594 blocks, 0.0 minutes remaining.
+clean_channel: 582/594 blocks, 0.0 minutes remaining.
+clean_channel: 583/594 blocks, 0.0 minutes remaining.
+clean_channel: 584/594 blocks, 0.0 minutes remaining.
+clean_channel: 585/594 blocks, 0.0 minutes remaining.
+clean_channel: 586/594 blocks, 0.0 minutes remaining.
+clean_channel: 587/594 blocks, 0.0 minutes remaining.
+clean_channel: 588/594 blocks, 0.0 minutes remaining.
+clean_channel: 589/594 blocks, 0.0 minutes remaining.
+clean_channel: 590/594 blocks, 0.0 minutes remaining.
+clean_channel: 591/594 blocks, 0.0 minutes remaining.
+clean_channel: 592/594 blocks, 0.0 minutes remaining.
+clean_channel: 593/594 blocks, 0.0 minutes remaining.
 clean_channel: 594/594 blocks, 0.0 minutes remaining.
-Removing 1 channel(s)...
+Removing 3 channel(s)...
 Use vis_artifacts to compare the cleaned data to the original.
 Done.
 Current plot held
 
-Removing 1 channel(s)...
+ans = 
+
+  70&times;1 Line array:
+
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+
+Current plot held
+
+ans = 
+
+  70&times;1 Line array:
+
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+  Line
+
+Removing 3 channel(s)...
 </pre><img vspace="5" hspace="5" src="index_03.png" alt=""> <img vspace="5" hspace="5" src="index_04.png" alt=""> <img vspace="5" hspace="5" src="index_05.png" alt=""> <h2 id="4"><a href="https://www.sciencedirect.com/science/article/pii/S1053811919309474">Zapline</a> to remove Power line artifacts</h2><p>Empirical tests showed that 7 components are required to sufficiently remove the line noise - note the spatial distribution of PSD values stays the same at the different frequencies, except a small change posteriorly at the ~22Hz <a href="https://en.wikipedia.org/wiki/Harmonic">sub-harmonic</a> frequency</p><pre class="codeinput"><span class="comment">% Notch filter (better not used) would be:</span>
 <span class="comment">% EEG = pop_eegfiltnew(EEG, 48,52,826,1,[],0);</span>
 
@@ -223,12 +1555,39 @@ figure(<span class="string">'Name'</span>,<span class="string">'Power line remov
 
 Power_cleanEEG = EEGzap{3}; <span class="comment">% this is the right data</span>
 clear <span class="string">EEGzap</span>                <span class="comment">% clear up memory</span>
+</pre><pre class="codeoutput"> 
+NoiseTools, version 18-Feb-2020
+http://audition.ens.fr/adc/NoiseTools
+Please cite relevant methods papers.
+ 
 
-<span class="comment">% Compute the PSD of each channel and add them (nt_dpect_plot computes</span>
-<span class="comment">% the Power Spectral Density estimate via &lt;https://en.wikipedia.org/wiki/Welch%27s_method#:~:text=Welch's%20method%2C%20named%20after%20Peter,a%20signal%20at%20different%20frequencies. Welch's method&gt;)</span>
-<span class="comment">% Note here the normalization by sqrt(mean(EEG.data(:)).^2), avg power of</span>
-<span class="comment">% the raw data</span>
-fprintf(<span class="string">'proportion of non-DC power removed %g\n:'</span>, <span class="keyword">...</span>
+nfft =
+
+        1024
+
+pop_spectopo(): selecting time range   0.00 ms to 743000.00 ms (points 1 to 185751)
+Pop_spectopo: finding data discontinuities
+Selecting the first 15.0% of data for analysis...
+Click on each trace for channel/component index
+
+nfft =
+
+        1024
+
+pop_spectopo(): selecting time range   0.00 ms to 743000.00 ms (points 1 to 185751)
+Pop_spectopo: finding data discontinuities
+Selecting the first 15.0% of data for analysis...
+Click on each trace for channel/component index
+
+nfft =
+
+        1024
+
+pop_spectopo(): selecting time range   0.00 ms to 743000.00 ms (points 1 to 185751)
+Pop_spectopo: finding data discontinuities
+Selecting the first 15.0% of data for analysis...
+Click on each trace for channel/component index
+</pre><img vspace="5" hspace="5" src="index_06.png" alt=""> <p>Compute the PSD of each channel and add them (nt_dpect_plot computes the Power Spectral Density estimate via <a href="https://en.wikipedia.org/wiki/Welch%27s_method">Welch's method</a>) Note here the normalization by sqrt(mean(EEG.data(:)).^2), avg power of the raw data</p><pre class="codeinput">fprintf(<span class="string">'proportion of non-DC power removed %g\n:'</span>, <span class="keyword">...</span>
     nt_wpwr(EEG.data-Power_cleanEEG.data)/nt_wpwr(nt_demean(EEG.data)));
 [psd_raw ,fr] = nt_spect_plot((EEG.data/sqrt(mean(EEG.data(:).^2)))',p.nfft,[],[],1/FLINE);
 [psd_zap ,fz] = nt_spect_plot((Power_cleanEEG.data/sqrt(mean(EEG.data(:).^2)))',p.nfft,[],[],1/FLINE);
@@ -246,40 +1605,8 @@ title(<span class="string">'PDS difference'</span>); grid <span class="string">o
 
 <span class="comment">% we are using the results from ZapLine here</span>
 clear <span class="string">EEG</span>; EEG = Power_cleanEEG; clear <span class="string">Power_cleanEEG</span>
-</pre><pre class="codeoutput">
-NoiseTools, version 18-Feb-2020
-http://audition.ens.fr/adc/NoiseTools
-Please cite relevant methods papers.
-
-
-nfft =
-
-        1024
-
-pop_spectopo(): selecting time range   0.00 ms to 743000.00 ms (points 1 to 185751)
-Pop_spectopo: finding data discontinuities
-Selecting the first 15.0% of data for analysis...
-Click on each trace for channel/component index
-
-nfft =
-
-        1024
-
-pop_spectopo(): selecting time range   0.00 ms to 743000.00 ms (points 1 to 185751)
-Pop_spectopo: finding data discontinuities
-Selecting the first 15.0% of data for analysis...
-Click on each trace for channel/component index
-
-nfft =
-
-        1024
-
-pop_spectopo(): selecting time range   0.00 ms to 743000.00 ms (points 1 to 185751)
-Pop_spectopo: finding data discontinuities
-Selecting the first 15.0% of data for analysis...
-Click on each trace for channel/component index
-proportion of non-DC power removed 0.0177047
-:</pre><img vspace="5" hspace="5" src="index_06.png" alt=""> <img vspace="5" hspace="5" src="index_07.png" alt=""> <h2 id="5">Let's look at the effect of high-pass and low-pass filters on artefacts</h2><p>We will filter using default parameters from EEGLab, compute ICA and use IClabel to classify artefacts.</p><pre class="codeinput">IClabel_selection = repmat([0.8 1],7,1); <span class="comment">% prob. [80% 100%]</span>
+</pre><pre class="codeoutput">proportion of non-DC power removed 0.0181016
+:</pre><img vspace="5" hspace="5" src="index_07.png" alt=""> <h2 id="6">Let's look at the effect of high-pass and low-pass filters on artefacts</h2><p>We will filter using default parameters from EEGLab, compute ICA and use IClabel to classify artefacts.</p><pre class="codeinput">IClabel_selection = repmat([0.8 1],7,1); <span class="comment">% prob. [80% 100%]</span>
 IClabel_selection(1,:) = NaN;            <span class="comment">% do not flag brain</span>
 
 <span class="comment">% The recommendation for ERP is a high-pass filter between 0.01 to 0.05Hz</span>
@@ -323,7 +1650,7 @@ The caxis range will be 0.666667 times the sym. abs. data range -&gt; [-138.444,
 Data will be plotted between 0 and 3714 ms.
 Output data will be 3715 frames by 198 smoothed trials.
 Outtrials: 2.50 to 199.50
-Not all sortvar values within time vector limits:
+Not all sortvar values within time vector limits: 
         outliers will be shown at nearest limit.
 Overplotting sorted sortvar on data.
 Done.
@@ -333,7 +1660,7 @@ Computing spectra (window length 250; fft length: 250; overlap 0):
 
 Click on each trace for channel/component index
 
-ans =
+ans = 
 
   Figure (8: IC1 - pop_prop_extended()) with properties:
 
@@ -348,18 +1675,15 @@ ans =
 </pre><img vspace="5" hspace="5" src="index_08.png" alt=""> <img vspace="5" hspace="5" src="index_09.png" alt=""> <p>if we are happy with this result, the clean data are</p><pre class="codeinput">EEG_ica_002hz_ICL_clean = pop_icflag(EEG_ica_002hz_ICL,IClabel_selection);
 EEG_ica_002hz_ICL_clean = pop_subcomp(EEG_ica_002hz_ICL_clean, <span class="keyword">...</span>
     find(EEG_ica_002hz_ICL_clean.reject.gcompreject), 0);
-
-<span class="comment">% redo with low-pass filtered data</span>
+</pre><pre class="codeoutput">25 components rejected
+Computing projection ....
+</pre><p><i>what can be said of using low-pass in ICA and labelling?</i> Results are not that different, which demonstrates that low frequency demoninates - some muscle activity can be in the high frequency range</p><pre class="codeinput"><span class="comment">% redo with low-pass filtered data</span>
 EEG_ica_002hz_39hz_ICL = iclabel(EEG_ica_002hz_39hz);
 pop_viewprops(EEG_ica_002hz_39hz_ICL,0,1:20);
 set(gcf,<span class="string">'color'</span>,<span class="string">'w'</span>,<span class="string">'Colormap'</span>,diverging_bwr);
 pop_prop_extended(EEG_ica_002hz_ICL,0,1)
 set(gcf,<span class="string">'color'</span>,<span class="string">'w'</span>,<span class="string">'Colormap'</span>,diverging_bwr);
-
-<span class="comment">% _what can be said of using low-pass in ICA and labelling?_</span>
-</pre><pre class="codeoutput">25 components rejected
-Computing projection ....
-ICLabel: extracting features...
+</pre><pre class="codeoutput">ICLabel: extracting features...
 ICLabel: calculating labels...
 ICLabel: saving results...
 Drawing figure...
@@ -377,7 +1701,7 @@ The caxis range will be 0.666667 times the sym. abs. data range -&gt; [-138.444,
 Data will be plotted between 0 and 3714 ms.
 Output data will be 3715 frames by 198 smoothed trials.
 Outtrials: 2.50 to 199.50
-Not all sortvar values within time vector limits:
+Not all sortvar values within time vector limits: 
         outliers will be shown at nearest limit.
 Overplotting sorted sortvar on data.
 Done.
@@ -387,7 +1711,7 @@ Computing spectra (window length 250; fft length: 250; overlap 0):
 
 Click on each trace for channel/component index
 
-ans =
+ans = 
 
   Figure (10: IC1 - pop_prop_extended()) with properties:
 
@@ -467,7 +1791,7 @@ The caxis range will be 0.666667 times the sym. abs. data range -&gt; [-23.2269,
 Data will be plotted between 0 and 3714 ms.
 Output data will be 3715 frames by 198 smoothed trials.
 Outtrials: 2.50 to 199.50
-Not all sortvar values within time vector limits:
+Not all sortvar values within time vector limits: 
         outliers will be shown at nearest limit.
 Overplotting sorted sortvar on data.
 Done.
@@ -477,7 +1801,7 @@ Computing spectra (window length 250; fft length: 250; overlap 0):
 
 Click on each trace for channel/component index
 
-ans =
+ans = 
 
   Figure (14: IC1 - pop_prop_extended()) with properties:
 
@@ -494,35 +1818,34 @@ ICLabel: calculating labels...
 ICLabel: saving results...
 Drawing figure...
 More than 64 electrodes: electrode locations not shown
-</pre><img vspace="5" hspace="5" src="index_12.png" alt=""> <img vspace="5" hspace="5" src="index_13.png" alt=""> <img vspace="5" hspace="5" src="index_14.png" alt=""> <img vspace="5" hspace="5" src="index_15.png" alt=""> <img vspace="5" hspace="5" src="index_16.png" alt=""> <h2 id="8">Temporary filtering</h2><p><b>We can see that low frequency have more weights on ICA</b> The 1st component for filtered data at 0.01Hz is classified as 'others' with a power spectrum around 0, although it still have some 'brain' class associated to it. ICA/IClabel seem to work best with at least 1Hz filter, possibly adding a low-pass at 40Hz. At the same time, we want data filtered at 0.05Hz. A solution is temporary filtering, that is filter the data at say 2Hz/40Hz, compute ICA and labelling. We can then remove the artefacts, i.e. components identified as such and backproject onto the 0.01Hz we want.</p><pre class="codeinput"><span class="comment">% we use  for backprojection of ICA weight matrix and ICA sphere matrix</span>
-EEG_ica_2hz_39hz  = keepICA(EEG_ica_2hz_39hz);
-EEG_ica_bpr_002hz = ica_foreign_backproject(EEG_002hz,EEG_ica_2hz_39hz);
+</pre><img vspace="5" hspace="5" src="index_12.png" alt=""> <img vspace="5" hspace="5" src="index_13.png" alt=""> <img vspace="5" hspace="5" src="index_14.png" alt=""> <img vspace="5" hspace="5" src="index_15.png" alt=""> <img vspace="5" hspace="5" src="index_16.png" alt=""> <h2 id="10">Temporary filtering</h2><p><b>We can see that low frequency have more weights on ICA</b>. The 1st component for filtered data at 0.01Hz is classified as 'others' with a power spectrum around 0, although it still has some 'brain' class associated to it. ICA/IClabel seem to work best with at least 1Hz filter, possibly adding a low-pass at 40Hz. At the same time, we want data filtered at 0.05Hz. A solution is temporary filtering, that is filter the data at say 2Hz, compute ICA and labelling. We can then remove the artefacts, i.e. components identified as such and backproject onto the 0.01Hz we want.</p><pre class="codeinput"><span class="comment">% we use  for backprojection of ICA weight matrix and ICA sphere matrix</span>
+EEG_ica_2hz  = keepICA(EEG_ica_2hz);
+EEG_ica_bpr_002hz = ica_foreign_backproject(EEG_002hz,EEG_ica_2hz);
 
-<span class="comment">% let's see what IClabel has to say about the back projection</span>
+<span class="comment">% _let's see what IClabel has to say about the back projection_</span>
 <span class="comment">% the low frequency component is gone (unsurprizingly)</span>
 EEG_ica_bpr_002hz_ICL = iclabel(EEG_ica_bpr_002hz);
 pop_viewprops(EEG_ica_bpr_002hz_ICL,0,1:20);
 set(gcf,<span class="string">'color'</span>,<span class="string">'w'</span>,<span class="string">'Colormap'</span>,diverging_bwr);
-
-<span class="comment">% automatically keep Brain components</span>
-EEG_ica_bpr_002hz_ICL_clean = pop_icflag(EEG_ica_bpr_002hz_ICL, IClabel_selection);
-EEG_ica_bpr_002hz_ICL_clean = pop_subcomp(EEG_ica_bpr_002hz_ICL_clean,<span class="keyword">...</span>
-    find(EEG_ica_bpr_002hz_ICL_clean.reject.gcompreject) , 0);
-
-<span class="comment">% Sanity check</span>
-<span class="comment">% we computed ICA for data at 0.2Hz/40Hz, back projected for the 0.01Hz</span>
-<span class="comment">% filtered data - re-ran IClabel, flag brain components, and projected them</span>
-<span class="comment">% onto the scalp creating a clean dataset. All components should now be</span>
-<span class="comment">% brain</span>
-
-pop_prop_extended(EEG_ica_bpr_002hz_ICL_clean, 0, 1:10)
 </pre><pre class="codeoutput">eeg_checkset: recomputing the ICA activation matrix ...
 ICLabel: extracting features...
 ICLabel: calculating labels...
 ICLabel: saving results...
 Drawing figure...
 More than 64 electrodes: electrode locations not shown
-25 components rejected
+</pre><img vspace="5" hspace="5" src="index_17.png" alt=""> <p>automatically keep Brain components</p><pre class="codeinput">EEG_ica_bpr_002hz_ICL_clean = pop_icflag(EEG_ica_bpr_002hz_ICL, IClabel_selection);
+EEG_ica_bpr_002hz_ICL_clean = pop_subcomp(EEG_ica_bpr_002hz_ICL_clean,<span class="keyword">...</span>
+    find(EEG_ica_bpr_002hz_ICL_clean.reject.gcompreject) , 0);
+
+<span class="comment">% Sanity check</span>
+<span class="comment">% we computed ICA for data at 0.2Hz/40Hz, back projected for the 0.01Hz</span>
+<span class="comment">% filtered data - re-ran IClabel, flag brain components, and projected them</span>
+<span class="comment">% onto the scalp creating a clean dataset. Most components should now be</span>
+<span class="comment">% brain ; we can see there still some muscle activity - how hard this is to</span>
+<span class="comment">% clean data!</span>
+
+pop_prop_extended(EEG_ica_bpr_002hz_ICL_clean, 0, 1:10)
+</pre><pre class="codeoutput">18 components rejected
 Computing projection ....
 Using sampling rate 1000 Hz.
 Plotting input data as 200 epochs of 3715 frames sampled at 1000.0 Hz.
@@ -533,11 +1856,11 @@ Min: 200, 25th ptile: 200, Median: 200, 75th ptile: 200, Max: 200
 
 Smoothing the sorted epochs with a 3-epoch moving window.
   and a decimation factor of 1
-The caxis range will be 0.666667 times the sym. abs. data range -&gt; [-21.1269,21.1269].
+The caxis range will be 0.666667 times the sym. abs. data range -&gt; [-19.929,19.929].
 Data will be plotted between 0 and 3714 ms.
 Output data will be 3715 frames by 198 smoothed trials.
 Outtrials: 2.50 to 199.50
-Not all sortvar values within time vector limits:
+Not all sortvar values within time vector limits: 
         outliers will be shown at nearest limit.
 Overplotting sorted sortvar on data.
 Done.
@@ -555,11 +1878,11 @@ Min: 200, 25th ptile: 200, Median: 200, 75th ptile: 200, Max: 200
 
 Smoothing the sorted epochs with a 3-epoch moving window.
   and a decimation factor of 1
-The caxis range will be 0.666667 times the sym. abs. data range -&gt; [-13.9205,13.9205].
+The caxis range will be 0.666667 times the sym. abs. data range -&gt; [-13.4294,13.4294].
 Data will be plotted between 0 and 3714 ms.
 Output data will be 3715 frames by 198 smoothed trials.
 Outtrials: 2.50 to 199.50
-Not all sortvar values within time vector limits:
+Not all sortvar values within time vector limits: 
         outliers will be shown at nearest limit.
 Overplotting sorted sortvar on data.
 Done.
@@ -577,11 +1900,11 @@ Min: 200, 25th ptile: 200, Median: 200, 75th ptile: 200, Max: 200
 
 Smoothing the sorted epochs with a 3-epoch moving window.
   and a decimation factor of 1
-The caxis range will be 0.666667 times the sym. abs. data range -&gt; [-10.1437,10.1437].
+The caxis range will be 0.666667 times the sym. abs. data range -&gt; [-10.0047,10.0047].
 Data will be plotted between 0 and 3714 ms.
 Output data will be 3715 frames by 198 smoothed trials.
 Outtrials: 2.50 to 199.50
-Not all sortvar values within time vector limits:
+Not all sortvar values within time vector limits: 
         outliers will be shown at nearest limit.
 Overplotting sorted sortvar on data.
 Done.
@@ -599,11 +1922,11 @@ Min: 200, 25th ptile: 200, Median: 200, 75th ptile: 200, Max: 200
 
 Smoothing the sorted epochs with a 3-epoch moving window.
   and a decimation factor of 1
-The caxis range will be 0.666667 times the sym. abs. data range -&gt; [-11.979,11.979].
+The caxis range will be 0.666667 times the sym. abs. data range -&gt; [-9.44856,9.44856].
 Data will be plotted between 0 and 3714 ms.
 Output data will be 3715 frames by 198 smoothed trials.
 Outtrials: 2.50 to 199.50
-Not all sortvar values within time vector limits:
+Not all sortvar values within time vector limits: 
         outliers will be shown at nearest limit.
 Overplotting sorted sortvar on data.
 Done.
@@ -621,11 +1944,11 @@ Min: 200, 25th ptile: 200, Median: 200, 75th ptile: 200, Max: 200
 
 Smoothing the sorted epochs with a 3-epoch moving window.
   and a decimation factor of 1
-The caxis range will be 0.666667 times the sym. abs. data range -&gt; [-9.5287,9.5287].
+The caxis range will be 0.666667 times the sym. abs. data range -&gt; [-16.6384,16.6384].
 Data will be plotted between 0 and 3714 ms.
 Output data will be 3715 frames by 198 smoothed trials.
 Outtrials: 2.50 to 199.50
-Not all sortvar values within time vector limits:
+Not all sortvar values within time vector limits: 
         outliers will be shown at nearest limit.
 Overplotting sorted sortvar on data.
 Done.
@@ -643,11 +1966,11 @@ Min: 200, 25th ptile: 200, Median: 200, 75th ptile: 200, Max: 200
 
 Smoothing the sorted epochs with a 3-epoch moving window.
   and a decimation factor of 1
-The caxis range will be 0.666667 times the sym. abs. data range -&gt; [-15.3887,15.3887].
+The caxis range will be 0.666667 times the sym. abs. data range -&gt; [-11.9702,11.9702].
 Data will be plotted between 0 and 3714 ms.
 Output data will be 3715 frames by 198 smoothed trials.
 Outtrials: 2.50 to 199.50
-Not all sortvar values within time vector limits:
+Not all sortvar values within time vector limits: 
         outliers will be shown at nearest limit.
 Overplotting sorted sortvar on data.
 Done.
@@ -665,11 +1988,11 @@ Min: 200, 25th ptile: 200, Median: 200, 75th ptile: 200, Max: 200
 
 Smoothing the sorted epochs with a 3-epoch moving window.
   and a decimation factor of 1
-The caxis range will be 0.666667 times the sym. abs. data range -&gt; [-8.91176,8.91176].
+The caxis range will be 0.666667 times the sym. abs. data range -&gt; [-10.8329,10.8329].
 Data will be plotted between 0 and 3714 ms.
 Output data will be 3715 frames by 198 smoothed trials.
 Outtrials: 2.50 to 199.50
-Not all sortvar values within time vector limits:
+Not all sortvar values within time vector limits: 
         outliers will be shown at nearest limit.
 Overplotting sorted sortvar on data.
 Done.
@@ -687,11 +2010,11 @@ Min: 200, 25th ptile: 200, Median: 200, 75th ptile: 200, Max: 200
 
 Smoothing the sorted epochs with a 3-epoch moving window.
   and a decimation factor of 1
-The caxis range will be 0.666667 times the sym. abs. data range -&gt; [-12.5084,12.5084].
+The caxis range will be 0.666667 times the sym. abs. data range -&gt; [-16.0228,16.0228].
 Data will be plotted between 0 and 3714 ms.
 Output data will be 3715 frames by 198 smoothed trials.
 Outtrials: 2.50 to 199.50
-Not all sortvar values within time vector limits:
+Not all sortvar values within time vector limits: 
         outliers will be shown at nearest limit.
 Overplotting sorted sortvar on data.
 Done.
@@ -709,11 +2032,11 @@ Min: 200, 25th ptile: 200, Median: 200, 75th ptile: 200, Max: 200
 
 Smoothing the sorted epochs with a 3-epoch moving window.
   and a decimation factor of 1
-The caxis range will be 0.666667 times the sym. abs. data range -&gt; [-85.2012,85.2012].
+The caxis range will be 0.666667 times the sym. abs. data range -&gt; [-82.278,82.278].
 Data will be plotted between 0 and 3714 ms.
 Output data will be 3715 frames by 198 smoothed trials.
 Outtrials: 2.50 to 199.50
-Not all sortvar values within time vector limits:
+Not all sortvar values within time vector limits: 
         outliers will be shown at nearest limit.
 Overplotting sorted sortvar on data.
 Done.
@@ -731,11 +2054,11 @@ Min: 200, 25th ptile: 200, Median: 200, 75th ptile: 200, Max: 200
 
 Smoothing the sorted epochs with a 3-epoch moving window.
   and a decimation factor of 1
-The caxis range will be 0.666667 times the sym. abs. data range -&gt; [-9.235,9.235].
+The caxis range will be 0.666667 times the sym. abs. data range -&gt; [-8.80234,8.80234].
 Data will be plotted between 0 and 3714 ms.
 Output data will be 3715 frames by 198 smoothed trials.
 Outtrials: 2.50 to 199.50
-Not all sortvar values within time vector limits:
+Not all sortvar values within time vector limits: 
         outliers will be shown at nearest limit.
 Overplotting sorted sortvar on data.
 Done.
@@ -744,7 +2067,7 @@ Computing spectra (window length 250; fft length: 250; overlap 0):
 .Scaling spectrum by component RMS of scalp map power
 
 Click on each trace for channel/component index
-</pre><img vspace="5" hspace="5" src="index_17.png" alt=""> <img vspace="5" hspace="5" src="index_18.png" alt=""> <img vspace="5" hspace="5" src="index_19.png" alt=""> <img vspace="5" hspace="5" src="index_20.png" alt=""> <img vspace="5" hspace="5" src="index_21.png" alt=""> <img vspace="5" hspace="5" src="index_22.png" alt=""> <img vspace="5" hspace="5" src="index_23.png" alt=""> <img vspace="5" hspace="5" src="index_24.png" alt=""> <img vspace="5" hspace="5" src="index_25.png" alt=""> <img vspace="5" hspace="5" src="index_26.png" alt=""> <img vspace="5" hspace="5" src="index_27.png" alt=""> <h2 id="9">Re-referencing</h2><p>we have now two clean datasets, EEG_ica_002hz_ICL_clean and EEG_ica_bpr_002hz_ICL_clean which have the power line removed with ZapLine, then filtered at 0.01Hz (0.02Hz bound) and artefacts removed using IClabel ; directly from the 0.01Hz data or using labeling of the 2Hz/40Hz filtered data. We can now re-reference, we will use the common average refrence and rest.</p><pre class="codeinput">EEG_ica_002hz_ICL_clean_ca     = pop_reref(EEG_ica_002hz_ICL_clean,[],<span class="string">'interpchan'</span>,[]);
+</pre><img vspace="5" hspace="5" src="index_18.png" alt=""> <img vspace="5" hspace="5" src="index_19.png" alt=""> <img vspace="5" hspace="5" src="index_20.png" alt=""> <img vspace="5" hspace="5" src="index_21.png" alt=""> <img vspace="5" hspace="5" src="index_22.png" alt=""> <img vspace="5" hspace="5" src="index_23.png" alt=""> <img vspace="5" hspace="5" src="index_24.png" alt=""> <img vspace="5" hspace="5" src="index_25.png" alt=""> <img vspace="5" hspace="5" src="index_26.png" alt=""> <img vspace="5" hspace="5" src="index_27.png" alt=""> <h2 id="12">Re-referencing</h2><p>we have now two clean datasets, EEG_ica_002hz_ICL_clean and EEG_ica_bpr_002hz_ICL_clean which have the power line removed with ZapLine, then filtered at 0.01Hz (0.02Hz bound) and artefacts removed using IClabel ; directly from the 0.01Hz data or using labeling of the 2Hz/40Hz filtered data. We can now re-reference, we will use the common average refrence and rest.</p><pre class="codeinput">EEG_ica_002hz_ICL_clean_ca     = pop_reref(EEG_ica_002hz_ICL_clean,[],<span class="string">'interpchan'</span>,[]);
 EEG_ica_bpr_002hz_ICL_clean_ca = pop_reref(EEG_ica_bpr_002hz_ICL_clean,[],<span class="string">'interpchan'</span>,[]);
 
 <span class="comment">% REST parameters</span>
@@ -784,7 +2107,7 @@ No. of electrodes: 69
 electrodes do not ly on sphere surface -&gt; using projection
 No. of diples: 3000
 some dipoles are not within sphere 1 -&gt; rescale xyz coordinates of all dipoles
-</pre><h2 id="10">Check ERPs and statistics</h2><pre class="codeinput"><span class="comment">% Epoch data, remove baseline</span>
+</pre><h2 id="13">Check ERPs and statistics</h2><pre class="codeinput"><span class="comment">% Epoch data, remove baseline</span>
 EEG_ica_002hz_ICL_clean_ca = pop_epoch(EEG_ica_002hz_ICL_clean_ca,<span class="keyword">...</span>
     {<span class="string">'famous_new'</span>,<span class="string">'famous_second_early'</span>,<span class="string">'famous_second_late'</span>,<span class="keyword">...</span>
     <span class="string">'scrambled_new'</span>,<span class="string">'scrambled_second_early'</span>,<span class="string">'scrambled_second_late'</span>,<span class="keyword">...</span>
@@ -830,27 +2153,39 @@ DesignMatrix = [zeros(length(conditions),3) ones(length(conditions),1)];
 <span class="keyword">end</span>
 
 <span class="comment">% let's illustrate differences on a channel</span>
-channel = 64;
+channel = 63;
 cl = [1 0 0; 0 1 0; 0 0 1];
 figure(<span class="string">'Name'</span>,<span class="string">'ERP channel 63'</span>);
+xvect = EEG_ica_002hz_ICL_clean_ca.times;
 <span class="keyword">for</span> condition = 1:3
-    subplot(1,2,1);
-    plot(EEG_ica_002hz_ICL_clean_ca.times,<span class="keyword">...</span>
-        mean(squeeze(EEG_ica_002hz_ICL_clean_ca.data(channel,:,logical(DesignMatrix(:,condition)))),2),<span class="keyword">...</span>
-        <span class="string">'LineWidth'</span>,2,<span class="string">'Color'</span>,cl(condition,:));hold <span class="string">on</span>
-    plot(EEG_ica_002hz_ICL_clean_ca.times,<span class="keyword">...</span>
-        mean(squeeze(EEG_ica_002hz_ICL_clean_rest.data(channel,:,logical(DesignMatrix(:,condition)))),2),<span class="keyword">...</span>
-        <span class="string">'--'</span>,<span class="string">'LineWidth'</span>,2,<span class="string">'Color'</span>,cl(condition,:));
-    subplot(1,2,2);
-    plot(EEG_ica_002hz_ICL_clean_ca.times,<span class="keyword">...</span>
-        mean(squeeze(EEG_ica_bpr_002hz_ICL_clean_ca.data(channel,:,logical(DesignMatrix(:,condition)))),2),<span class="keyword">...</span>
-        <span class="string">'LineWidth'</span>,2,<span class="string">'Color'</span>,cl(condition,:));hold <span class="string">on</span>
-    plot(EEG_ica_002hz_ICL_clean_ca.times,<span class="keyword">...</span>
-        mean(squeeze(EEG_ica_bpr_002hz_ICL_clean_rest.data(channel,:,logical(DesignMatrix(:,condition)))),2),<span class="keyword">...</span>
-        <span class="string">'--'</span>,<span class="string">'LineWidth'</span>,2,<span class="string">'Color'</span>,cl(condition,:));
+    subplot(2,2,1);
+    ca   = squeeze(EEG_ica_002hz_ICL_clean_ca.data(channel,:,logical(DesignMatrix(:,condition))));
+    rest = squeeze(EEG_ica_002hz_ICL_clean_rest.data(channel,:,logical(DesignMatrix(:,condition))));
+    plot(xvect,mean(ca,2),<span class="string">'LineWidth'</span>,2,<span class="string">'Color'</span>,cl(condition,:));hold <span class="string">on</span>
+    plot(xvect,mean(rest,2),<span class="string">'--'</span>,<span class="string">'LineWidth'</span>,2,<span class="string">'Color'</span>,cl(condition,:));hold <span class="string">on</span>
+    subplot(2,2,3);
+    plot(xvect,mean(ca-rest,2),<span class="string">'LineWidth'</span>,1,<span class="string">'Color'</span>,cl(condition,:));hold <span class="string">on</span>
+    stderror= std(ca-rest,0,2) /sqrt(size(ca,2));
+    fillhandle = patch([xvect,fliplr(xvect)], <span class="keyword">...</span>
+        [(mean(ca-rest,2)-stderror./2)' flipud(mean(ca-rest,2)+stderror./2)'], cl(condition,:));
+    set(fillhandle,<span class="string">'EdgeColor'</span>,cl(condition,:),<span class="string">'FaceAlpha'</span>,0.2,<span class="string">'EdgeAlpha'</span>,0.2);
+
+    subplot(2,2,2);
+    ca   = squeeze(EEG_ica_bpr_002hz_ICL_clean_ca.data(channel,:,logical(DesignMatrix(:,condition))));
+    rest = squeeze(EEG_ica_bpr_002hz_ICL_clean_rest.data(channel,:,logical(DesignMatrix(:,condition))));
+    plot(xvect,mean(ca,2),<span class="string">'LineWidth'</span>,2,<span class="string">'Color'</span>,cl(condition,:));hold <span class="string">on</span>
+    plot(xvect,mean(rest,2),<span class="string">'--'</span>,<span class="string">'LineWidth'</span>,2,<span class="string">'Color'</span>,cl(condition,:));hold <span class="string">on</span>
+    subplot(2,2,4);
+    plot(xvect,mean(ca-rest,2),<span class="string">'LineWidth'</span>,1,<span class="string">'Color'</span>,cl(condition,:));hold <span class="string">on</span>
+    stderror= std(ca-rest,0,2) /sqrt(size(ca,2));
+    fillhandle = patch([xvect,fliplr(xvect)], <span class="keyword">...</span>
+        [(mean(ca-rest,2)-stderror./2)' flipud(mean(ca-rest,2)+stderror./2)'], cl(condition,:));
+    set(fillhandle,<span class="string">'EdgeColor'</span>,cl(condition,:),<span class="string">'FaceAlpha'</span>,0.2,<span class="string">'EdgeAlpha'</span>,0.2);
 <span class="keyword">end</span>
-subplot(1,2,1); title(<span class="string">'standard IClabel'</span>);grid <span class="string">on</span>; box <span class="string">on</span>
-subplot(1,2,2); title(<span class="string">'IClabel with temporary filtering'</span>);grid <span class="string">on</span>; box <span class="string">on</span>
+subplot(2,2,1); title(<span class="string">'standard IClabel'</span>);grid <span class="string">on</span>; box <span class="string">on</span>
+subplot(2,2,2); title(<span class="string">'IClabel with temporary filtering'</span>);grid <span class="string">on</span>; box <span class="string">on</span>
+subplot(2,2,3); title(<span class="string">'difference CA-REST standard filtering'</span>);grid <span class="string">on</span>; box <span class="string">on</span>
+subplot(2,2,4); title(<span class="string">'difference CA-REST with tmp filtering'</span>);grid <span class="string">on</span>; box <span class="string">on</span>
 drawnow
 </pre><pre class="codeoutput">pop_epoch():884 epochs selected
 Epoching...
@@ -901,47 +2236,47 @@ pop_rmbase(): Removing baseline...
 
 
 <span class="comment">% we can also check across all channels</span>
-figure(<span class="string">'Name'</span>,<span class="string">'Stat results (uncorrected)'</span>)
+figure(<span class="string">'Name'</span>,<span class="string">'Stat results (uncorrected)'</span>,<span class="string">'units'</span>,<span class="string">'normalized'</span>,<span class="string">'outerposition'</span>,[0 0 1 1])
 subplot(3,3,1);
 imagesc(EEG_ica_002hz_ICL_clean_ca.times,1:size(Fmap1,1),Fmap1.*(Pmap1&lt;.05));
-set(gcf,<span class="string">'color'</span>,<span class="string">'w'</span>,<span class="string">'Colormap'</span>,diverging_bwr(129:end,:));
+colormap(gca, diverging_bwr(129:end,:)); caxis([0 50])
 xlabel(<span class="string">'time (ms)'</span>); ylabel(<span class="string">'channels'</span>);
 title(<span class="string">'Face effect IC with Filter 0.01Hz Ref: common'</span>)
 subplot(3,3,2);
 imagesc(EEG_ica_002hz_ICL_clean_ca.times,1:size(Fmap2,1),Fmap2.*(Pmap2&lt;.05));
-set(gcf,<span class="string">'color'</span>,<span class="string">'w'</span>,<span class="string">'Colormap'</span>,diverging_bwr(129:end,:));
+colormap(gca, diverging_bwr(129:end,:));  caxis([0 50])
 xlabel(<span class="string">'time (ms)'</span>); ylabel(<span class="string">'channels'</span>);
 title(<span class="string">'Face effect IC with Filter 2Hz Ref: common'</span>)
 subplot(3,3,3);
 imagesc(EEG_ica_002hz_ICL_clean_ca.times,1:size(Fmap2,1),Pmap1-Pmap2)
-colormap(gca, diverging_bwr);
+colormap(gca, diverging_bwr);  caxis([-1 1])
 xlabel(<span class="string">'time (ms)'</span>); ylabel(<span class="string">'channels'</span>);
 title(<span class="string">'p-value differences'</span>)
 
 subplot(3,3,4);
 imagesc(EEG_ica_002hz_ICL_clean_ca.times,1:size(Fmap3,1),Fmap3.*(Pmap3&lt;.05));
-set(gcf,<span class="string">'color'</span>,<span class="string">'w'</span>,<span class="string">'Colormap'</span>,diverging_bwr(129:end,:));
+colormap(gca, diverging_bwr(129:end,:));  caxis([0 50])
 xlabel(<span class="string">'time (ms)'</span>); ylabel(<span class="string">'channels'</span>);
 title(<span class="string">'Face effect IC with Filter 0.01Hz Ref: rest'</span>)
 subplot(3,3,5);
 imagesc(EEG_ica_002hz_ICL_clean_ca.times,1:size(Fmap4,1),Fmap4.*(Pmap4&lt;.05));
-set(gcf,<span class="string">'color'</span>,<span class="string">'w'</span>,<span class="string">'Colormap'</span>,diverging_bwr(129:end,:));
+colormap(gca, diverging_bwr(129:end,:));  caxis([0 50])
 xlabel(<span class="string">'time (ms)'</span>); ylabel(<span class="string">'channels'</span>);
 title(<span class="string">'Face effect IC with Filter 0.01Hz Ref: rest'</span>)
 subplot(3,3,6);
 imagesc(EEG_ica_002hz_ICL_clean_ca.times,1:size(Fmap3,1),Pmap3-Pmap4)
-colormap(gca, diverging_bwr);
+colormap(gca, diverging_bwr);  caxis([-1 1])
 xlabel(<span class="string">'time (ms)'</span>); ylabel(<span class="string">'channels'</span>);
 title(<span class="string">'p-value differences'</span>)
 
 subplot(3,3,7);
 imagesc(EEG_ica_002hz_ICL_clean_ca.times,1:size(Fmap1,1),Pmap1-Pmap3)
-colormap(gca, diverging_bwr);
+colormap(gca, diverging_bwr); caxis([-1 1])
 xlabel(<span class="string">'time (ms)'</span>); ylabel(<span class="string">'channels'</span>);
 title(<span class="string">'p-value differences'</span>)
 subplot(3,3,8);
 imagesc(EEG_ica_002hz_ICL_clean_ca.times,1:size(Fmap2,1),Pmap2-Pmap4)
-colormap(gca, diverging_bwr);
+colormap(gca, diverging_bwr); caxis([-1 1])
 xlabel(<span class="string">'time (ms)'</span>); ylabel(<span class="string">'channels'</span>);
 title(<span class="string">'p-value differences'</span>)
 
@@ -952,7 +2287,7 @@ all(:,:,2) = Fmap2;
 all(:,:,3) = Fmap3;
 all(:,:,4) = Fmap4;
 imagesc(EEG_ica_002hz_ICL_clean_ca.times,1:size(Fmap2,1),std(all,[],3))
-colormap(gca, diverging_bwr);
+colormap(gca, hot); caxis([0 10])
 xlabel(<span class="string">'time (ms)'</span>); ylabel(<span class="string">'channels'</span>);
 title(<span class="string">'F-values vibration (std among methods)'</span>)
 </pre><img vspace="5" hspace="5" src="index_29.png" alt=""> <p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2020a</a><br></p></div><!--
@@ -960,11 +2295,11 @@ title(<span class="string">'F-values vibration (std among methods)'</span>)
 %% OHBM2020 EEG Preprocessing: not so basic after all
 %
 % *This script illustrate the effect of filtering, IC labeling and
-% referencing on statistical results.*
+% referencing on statistical results.* 
 % The data are taken from https://openneuro.org/datasets/ds002718/versions/1.0.2
 % We use here sub-011 only.
 % The code was writen by Cyril Pernet, reusing Nicolas Langers' code from
-% <https://osf.io/z8uqx/ OSF> and snippet from LI Dong.
+% <https://osf.io/z8uqx/ OSF>
 
 %% let's check the environement, files, etc
 
@@ -1022,16 +2357,16 @@ end
 EEG = pop_loadset(datafile);
 EEG = pop_select(EEG, 'nochannel',{'EEG061','EEG062','EEG063','EEG064'});
 
-figure('Name','Raw data topography');
+figure('Name','Raw data topography'); 
 subplot(1,2,1);
-topoplot(zscore(double(EEG.data(:,100))),EEG.chanlocs,'electrodes','off','colormap',diverging_bwr);
+topoplot(zscore(double(EEG.data(:,100))),EEG.chanlocs,'electrodes','off','colormap',diverging_bwr); 
 title('Original file - data frame 100');subplot(1,2,2)
 pop_spectopo(EEG, 1, [0  size(EEG.data,2)],'EEG','percent',15,...
     'freq',[6 10 22 50],'freqrange',[2 70],'electrodes','off');
 set(gcf,'Colormap',diverging_bwr);
 drawnow
 
-%% bad channel indentification
+%% bad channel indentification 
 % we use here cleanraw_data.m comparing results with or witout 1Hz temporary filter
 
 % create the copy and remove bad channels (includes a filter at 0.5Hz)
@@ -1041,7 +2376,7 @@ EEG_badchan = pop_clean_rawdata(EEG_badchan,'FlatlineCriterion',5,'ChannelCriter
     'BurstCriterion','off','WindowCriterion','off','BurstRejection','off',...
     'Distance','Euclidian','WindowCriterionTolerances','off' );
 
-% Temporary highpass filter 1Hz
+% Temporary highpass filter 1Hz 
 EEGf_badchan = EEG;
 EEGf_badchan = pop_eegfiltnew(EEGf_badchan,1,0);
 EEGf_badchan = pop_clean_rawdata(EEGf_badchan,'FlatlineCriterion',5,'ChannelCriterion',0.8,...
@@ -1054,19 +2389,19 @@ vis_artifacts(EEG_badchan, EEG)
 vis_artifacts(EEGf_badchan, EEG)
 
 % find index of the retained channels and remove from original data
-tbl_channels = struct2table(EEGf_badchan.chanlocs);
+tbl_channels = struct2table(EEGf_badchan.chanlocs); 
 ind_retained = find(arrayfun(@(x)ismember(x.labels,tbl_channels.labels),EEG.chanlocs));
 ind_bad      = setdiff(1:size(EEG.chanlocs,1),ind_retained);
 EEG          = pop_select(EEG, 'nochannel',{EEG.chanlocs(ind_bad).labels});
 
 %% <https://www.sciencedirect.com/science/article/pii/S1053811919309474 Zapline> to remove Power line artifacts
-% Empirical tests showed that 7 components are required to sufficiently
+% Empirical tests showed that 7 components are required to sufficiently 
 % remove the line noise - note the spatial distribution of PSD values stays
 % the same at the different frequencies, except a small change posteriorly
 % at the ~22Hz <https://en.wikipedia.org/wiki/Harmonic sub-harmonic> frequency
 
 % Notch filter (better not used) would be:
-% EEG = pop_eegfiltnew(EEG, 48,52,826,1,[],0);
+% EEG = pop_eegfiltnew(EEG, 48,52,826,1,[],0); 
 
 % test Zapline with different number of components:
 line_noise_freq = 50; % 50Hz line noise
@@ -1078,7 +2413,7 @@ figure('Name','Power line removal - Zapline 3-5-7 components', ...
     'units','normalized','outerposition',[0 0 1 1])
 for n = 3:-1:1
     [clean, noise] = nt_zapline(EEG.data',FLINE,ncomp(n));
-    EEGzap{n}      = EEG;
+    EEGzap{n}      = EEG; 
     EEGzap{n}.data = clean';
     subplot(1,3,n);
     pop_spectopo(EEGzap{n}, 1, [0  size(EEGzap{n}.data,2)],'EEG','percent',15,...
@@ -1087,14 +2422,16 @@ for n = 3:-1:1
 end
 
 % Plot the the raw vs clean/removed signal (here for 7 components):
-
+ 
 Power_cleanEEG = EEGzap{3}; % this is the right data
 clear EEGzap                % clear up memory
 
+%%
 % Compute the PSD of each channel and add them (nt_dpect_plot computes
-% the Power Spectral Density estimate via <https://en.wikipedia.org/wiki/Welch%27s_method#:~:text=Welch's%20method%2C%20named%20after%20Peter,a%20signal%20at%20different%20frequencies. Welch's method>)
+% the Power Spectral Density estimate via <https://en.wikipedia.org/wiki/Welch%27s_method Welch's method>) 
 % Note here the normalization by sqrt(mean(EEG.data(:)).^2), avg power of
 % the raw data
+
 fprintf('proportion of non-DC power removed %g\n:', ...
     nt_wpwr(EEG.data-Power_cleanEEG.data)/nt_wpwr(nt_demean(EEG.data)));
 [psd_raw ,fr] = nt_spect_plot((EEG.data/sqrt(mean(EEG.data(:).^2)))',p.nfft,[],[],1/FLINE);
@@ -1151,6 +2488,11 @@ EEG_ica_002hz_ICL_clean = pop_icflag(EEG_ica_002hz_ICL,IClabel_selection);
 EEG_ica_002hz_ICL_clean = pop_subcomp(EEG_ica_002hz_ICL_clean, ...
     find(EEG_ica_002hz_ICL_clean.reject.gcompreject), 0);
 
+%%
+% _what can be said of using low-pass in ICA and labelling?_
+% Results are not that different, which demonstrates that low frequency
+% demoninates - some muscle activity can be in the high frequency range 
+
 % redo with low-pass filtered data
 EEG_ica_002hz_39hz_ICL = iclabel(EEG_ica_002hz_39hz);
 pop_viewprops(EEG_ica_002hz_39hz_ICL,0,1:20);
@@ -1158,9 +2500,7 @@ set(gcf,'color','w','Colormap',diverging_bwr);
 pop_prop_extended(EEG_ica_002hz_ICL,0,1)
 set(gcf,'color','w','Colormap',diverging_bwr);
 
-% _what can be said of using low-pass in ICA and labelling?_
-
-
+  
 %%
 % _Let's test different filters_
 if ~exist('all_filtICA.mat','file')
@@ -1203,45 +2543,47 @@ set(gcf,'color','w','Colormap',diverging_bwr);
 EEG_ica_2hz_39hz_ICL = iclabel(EEG_ica_2hz_39hz);
 pop_viewprops(EEG_ica_2hz_39hz_ICL,0,1:20);
 set(gcf,'color','w','Colormap',diverging_bwr);
-
+  
 %% Temporary filtering
-% *We can see that low frequency have more weights on ICA*
+% *We can see that low frequency have more weights on ICA*.
 % The 1st component for filtered data at 0.01Hz is classified as 'others'
-% with a power spectrum around 0, although it still have some 'brain' class
+% with a power spectrum around 0, although it still has some 'brain' class
 % associated to it. ICA/IClabel seem to work best with at least 1Hz filter,
-% possibly adding a low-pass at 40Hz. At the same time, we want data
+% possibly adding a low-pass at 40Hz. At the same time, we want data 
 % filtered at 0.05Hz. A solution is temporary filtering, that is filter
-% the data at say 2Hz/40Hz, compute ICA and labelling. We can then remove
-% the artefacts, i.e. components identified as such and backproject onto
+% the data at say 2Hz, compute ICA and labelling. We can then remove
+% the artefacts, i.e. components identified as such and backproject onto 
 % the 0.01Hz we want.
 
 % we use  for backprojection of ICA weight matrix and ICA sphere matrix
-EEG_ica_2hz_39hz  = keepICA(EEG_ica_2hz_39hz);
-EEG_ica_bpr_002hz = ica_foreign_backproject(EEG_002hz,EEG_ica_2hz_39hz);
+EEG_ica_2hz  = keepICA(EEG_ica_2hz); 
+EEG_ica_bpr_002hz = ica_foreign_backproject(EEG_002hz,EEG_ica_2hz);
 
-% let's see what IClabel has to say about the back projection
+% _let's see what IClabel has to say about the back projection_
 % the low frequency component is gone (unsurprizingly)
 EEG_ica_bpr_002hz_ICL = iclabel(EEG_ica_bpr_002hz);
 pop_viewprops(EEG_ica_bpr_002hz_ICL,0,1:20);
 set(gcf,'color','w','Colormap',diverging_bwr);
 
-% automatically keep Brain components
-EEG_ica_bpr_002hz_ICL_clean = pop_icflag(EEG_ica_bpr_002hz_ICL, IClabel_selection);
+%%
+% automatically keep Brain components 
+EEG_ica_bpr_002hz_ICL_clean = pop_icflag(EEG_ica_bpr_002hz_ICL, IClabel_selection); 
 EEG_ica_bpr_002hz_ICL_clean = pop_subcomp(EEG_ica_bpr_002hz_ICL_clean,...
     find(EEG_ica_bpr_002hz_ICL_clean.reject.gcompreject) , 0);
 
-% Sanity check
+% Sanity check 
 % we computed ICA for data at 0.2Hz/40Hz, back projected for the 0.01Hz
 % filtered data - re-ran IClabel, flag brain components, and projected them
-% onto the scalp creating a clean dataset. All components should now be
-% brain
+% onto the scalp creating a clean dataset. Most components should now be
+% brain ; we can see there still some muscle activity - how hard this is to
+% clean data! 
 
 pop_prop_extended(EEG_ica_bpr_002hz_ICL_clean, 0, 1:10)
 
 %% Re-referencing
 % we have now two clean datasets, EEG_ica_002hz_ICL_clean and
 % EEG_ica_bpr_002hz_ICL_clean which have the power line removed with
-% ZapLine, then filtered at 0.01Hz (0.02Hz bound) and artefacts removed
+% ZapLine, then filtered at 0.01Hz (0.02Hz bound) and artefacts removed 
 % using IClabel ; directly from the 0.01Hz data or using labeling of the
 % 2Hz/40Hz filtered data. We can now re-reference, we will use the common
 % average refrence and rest.
@@ -1308,7 +2650,7 @@ pop_rmbase(EEG_ica_bpr_002hz_ICL_clean_rest,[-200 0]);
 EEG_ica_bpr_002hz_ICL_clean_rest = eeg_checkset(EEG_ica_bpr_002hz_ICL_clean_rest);
 
 % Compute whole scalp statistics using LIMO tools
-% 1st we find the different type of faces
+% 1st we find the different type of faces 
 % 2nd create a design matrix X such Y = BX + e
 % 3rd estimate the face effect using the GLM
 conditions = arrayfun(@(x) x.eventface_type{1},EEG_ica_002hz_ICL_clean_ca.epoch,...
@@ -1320,30 +2662,42 @@ for c = 1:3
 end
 
 % let's illustrate differences on a channel
-channel = 64;
+channel = 63;
 cl = [1 0 0; 0 1 0; 0 0 1];
 figure('Name','ERP channel 63');
+xvect = EEG_ica_002hz_ICL_clean_ca.times;
 for condition = 1:3
-    subplot(1,2,1);
-    plot(EEG_ica_002hz_ICL_clean_ca.times,...
-        mean(squeeze(EEG_ica_002hz_ICL_clean_ca.data(channel,:,logical(DesignMatrix(:,condition)))),2),...
-        'LineWidth',2,'Color',cl(condition,:));hold on
-    plot(EEG_ica_002hz_ICL_clean_ca.times,...
-        mean(squeeze(EEG_ica_002hz_ICL_clean_rest.data(channel,:,logical(DesignMatrix(:,condition)))),2),...
-        'REPLACE_WITH_DASH_DASH','LineWidth',2,'Color',cl(condition,:));
-    subplot(1,2,2);
-    plot(EEG_ica_002hz_ICL_clean_ca.times,...
-        mean(squeeze(EEG_ica_bpr_002hz_ICL_clean_ca.data(channel,:,logical(DesignMatrix(:,condition)))),2),...
-        'LineWidth',2,'Color',cl(condition,:));hold on
-    plot(EEG_ica_002hz_ICL_clean_ca.times,...
-        mean(squeeze(EEG_ica_bpr_002hz_ICL_clean_rest.data(channel,:,logical(DesignMatrix(:,condition)))),2),...
-        'REPLACE_WITH_DASH_DASH','LineWidth',2,'Color',cl(condition,:));
+    subplot(2,2,1);
+    ca   = squeeze(EEG_ica_002hz_ICL_clean_ca.data(channel,:,logical(DesignMatrix(:,condition))));
+    rest = squeeze(EEG_ica_002hz_ICL_clean_rest.data(channel,:,logical(DesignMatrix(:,condition))));
+    plot(xvect,mean(ca,2),'LineWidth',2,'Color',cl(condition,:));hold on
+    plot(xvect,mean(rest,2),'REPLACE_WITH_DASH_DASH','LineWidth',2,'Color',cl(condition,:));hold on
+    subplot(2,2,3);
+    plot(xvect,mean(ca-rest,2),'LineWidth',1,'Color',cl(condition,:));hold on
+    stderror= std(ca-rest,0,2) /sqrt(size(ca,2));
+    fillhandle = patch([xvect,fliplr(xvect)], ...
+        [(mean(ca-rest,2)-stderror./2)' flipud(mean(ca-rest,2)+stderror./2)'], cl(condition,:));
+    set(fillhandle,'EdgeColor',cl(condition,:),'FaceAlpha',0.2,'EdgeAlpha',0.2);
+    
+    subplot(2,2,2);
+    ca   = squeeze(EEG_ica_bpr_002hz_ICL_clean_ca.data(channel,:,logical(DesignMatrix(:,condition))));
+    rest = squeeze(EEG_ica_bpr_002hz_ICL_clean_rest.data(channel,:,logical(DesignMatrix(:,condition))));
+    plot(xvect,mean(ca,2),'LineWidth',2,'Color',cl(condition,:));hold on
+    plot(xvect,mean(rest,2),'REPLACE_WITH_DASH_DASH','LineWidth',2,'Color',cl(condition,:));hold on
+    subplot(2,2,4);
+    plot(xvect,mean(ca-rest,2),'LineWidth',1,'Color',cl(condition,:));hold on
+    stderror= std(ca-rest,0,2) /sqrt(size(ca,2));
+    fillhandle = patch([xvect,fliplr(xvect)], ...
+        [(mean(ca-rest,2)-stderror./2)' flipud(mean(ca-rest,2)+stderror./2)'], cl(condition,:));
+    set(fillhandle,'EdgeColor',cl(condition,:),'FaceAlpha',0.2,'EdgeAlpha',0.2);
 end
-subplot(1,2,1); title('standard IClabel');grid on; box on
-subplot(1,2,2); title('IClabel with temporary filtering');grid on; box on
+subplot(2,2,1); title('standard IClabel');grid on; box on
+subplot(2,2,2); title('IClabel with temporary filtering');grid on; box on
+subplot(2,2,3); title('difference CA-REST standard filtering');grid on; box on
+subplot(2,2,4); title('difference CA-REST with tmp filtering');grid on; box on
 drawnow
 
-%%
+%% 
 % run GLM and F value and p-value maps
 for channel = size(EEG_ica_002hz_ICL_clean_ca.data,1):-1:1
     model = limo_glm(squeeze(EEG_ica_002hz_ICL_clean_ca.data(channel,:,:))',...
@@ -1366,47 +2720,47 @@ end
 
 
 % we can also check across all channels
-figure('Name','Stat results (uncorrected)')
+figure('Name','Stat results (uncorrected)','units','normalized','outerposition',[0 0 1 1])
 subplot(3,3,1);
-imagesc(EEG_ica_002hz_ICL_clean_ca.times,1:size(Fmap1,1),Fmap1.*(Pmap1<.05));
-set(gcf,'color','w','Colormap',diverging_bwr(129:end,:));
+imagesc(EEG_ica_002hz_ICL_clean_ca.times,1:size(Fmap1,1),Fmap1.*(Pmap1<.05)); 
+colormap(gca, diverging_bwr(129:end,:)); caxis([0 50])
 xlabel('time (ms)'); ylabel('channels');
 title('Face effect IC with Filter 0.01Hz Ref: common')
 subplot(3,3,2);
-imagesc(EEG_ica_002hz_ICL_clean_ca.times,1:size(Fmap2,1),Fmap2.*(Pmap2<.05));
-set(gcf,'color','w','Colormap',diverging_bwr(129:end,:));
+imagesc(EEG_ica_002hz_ICL_clean_ca.times,1:size(Fmap2,1),Fmap2.*(Pmap2<.05)); 
+colormap(gca, diverging_bwr(129:end,:));  caxis([0 50])
 xlabel('time (ms)'); ylabel('channels');
 title('Face effect IC with Filter 2Hz Ref: common')
 subplot(3,3,3);
 imagesc(EEG_ica_002hz_ICL_clean_ca.times,1:size(Fmap2,1),Pmap1-Pmap2)
-colormap(gca, diverging_bwr);
+colormap(gca, diverging_bwr);  caxis([-1 1])
 xlabel('time (ms)'); ylabel('channels');
 title('p-value differences')
 
 subplot(3,3,4);
-imagesc(EEG_ica_002hz_ICL_clean_ca.times,1:size(Fmap3,1),Fmap3.*(Pmap3<.05));
-set(gcf,'color','w','Colormap',diverging_bwr(129:end,:));
+imagesc(EEG_ica_002hz_ICL_clean_ca.times,1:size(Fmap3,1),Fmap3.*(Pmap3<.05)); 
+colormap(gca, diverging_bwr(129:end,:));  caxis([0 50])
 xlabel('time (ms)'); ylabel('channels');
 title('Face effect IC with Filter 0.01Hz Ref: rest')
 subplot(3,3,5);
-imagesc(EEG_ica_002hz_ICL_clean_ca.times,1:size(Fmap4,1),Fmap4.*(Pmap4<.05));
-set(gcf,'color','w','Colormap',diverging_bwr(129:end,:));
+imagesc(EEG_ica_002hz_ICL_clean_ca.times,1:size(Fmap4,1),Fmap4.*(Pmap4<.05)); 
+colormap(gca, diverging_bwr(129:end,:));  caxis([0 50])
 xlabel('time (ms)'); ylabel('channels');
 title('Face effect IC with Filter 0.01Hz Ref: rest')
 subplot(3,3,6);
 imagesc(EEG_ica_002hz_ICL_clean_ca.times,1:size(Fmap3,1),Pmap3-Pmap4)
-colormap(gca, diverging_bwr);
+colormap(gca, diverging_bwr);  caxis([-1 1])
 xlabel('time (ms)'); ylabel('channels');
 title('p-value differences')
 
 subplot(3,3,7);
 imagesc(EEG_ica_002hz_ICL_clean_ca.times,1:size(Fmap1,1),Pmap1-Pmap3)
-colormap(gca, diverging_bwr);
+colormap(gca, diverging_bwr); caxis([-1 1])
 xlabel('time (ms)'); ylabel('channels');
 title('p-value differences')
 subplot(3,3,8);
 imagesc(EEG_ica_002hz_ICL_clean_ca.times,1:size(Fmap2,1),Pmap2-Pmap4)
-colormap(gca, diverging_bwr);
+colormap(gca, diverging_bwr); caxis([-1 1])
 xlabel('time (ms)'); ylabel('channels');
 title('p-value differences')
 
@@ -1417,7 +2771,7 @@ all(:,:,2) = Fmap2;
 all(:,:,3) = Fmap3;
 all(:,:,4) = Fmap4;
 imagesc(EEG_ica_002hz_ICL_clean_ca.times,1:size(Fmap2,1),std(all,[],3))
-colormap(gca, diverging_bwr);
+colormap(gca, hot); caxis([0 10])
 xlabel('time (ms)'); ylabel('channels');
 title('F-values vibration (std among methods)')
 

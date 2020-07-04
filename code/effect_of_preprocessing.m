@@ -5,7 +5,7 @@
 % The data are taken from https://openneuro.org/datasets/ds002718/versions/1.0.2
 % We use here sub-011 only.
 % The code was writen by Cyril Pernet, reusing Nicolas Langers' code from
-% <https://osf.io/z8uqx/ OSF> and snippet from LI Dong.
+% <https://osf.io/z8uqx/ OSF>
 
 %% let's check the environement, files, etc
 
@@ -132,10 +132,12 @@ end
 Power_cleanEEG = EEGzap{3}; % this is the right data
 clear EEGzap                % clear up memory
 
+%%
 % Compute the PSD of each channel and add them (nt_dpect_plot computes
-% the Power Spectral Density estimate via <https://en.wikipedia.org/wiki/Welch%27s_method#:~:text=Welch's%20method%2C%20named%20after%20Peter,a%20signal%20at%20different%20frequencies. Welch's method>) 
+% the Power Spectral Density estimate via <https://en.wikipedia.org/wiki/Welch%27s_method Welch's method>) 
 % Note here the normalization by sqrt(mean(EEG.data(:)).^2), avg power of
 % the raw data
+
 fprintf('proportion of non-DC power removed %g\n:', ...
     nt_wpwr(EEG.data-Power_cleanEEG.data)/nt_wpwr(nt_demean(EEG.data)));
 [psd_raw ,fr] = nt_spect_plot((EEG.data/sqrt(mean(EEG.data(:).^2)))',p.nfft,[],[],1/FLINE);
@@ -192,6 +194,11 @@ EEG_ica_002hz_ICL_clean = pop_icflag(EEG_ica_002hz_ICL,IClabel_selection);
 EEG_ica_002hz_ICL_clean = pop_subcomp(EEG_ica_002hz_ICL_clean, ...
     find(EEG_ica_002hz_ICL_clean.reject.gcompreject), 0);
 
+%%
+% _what can be said of using low-pass in ICA and labelling?_
+% Results are not that different, which demonstrates that low frequency
+% demoninates - some muscle activity can be in the high frequency range 
+
 % redo with low-pass filtered data
 EEG_ica_002hz_39hz_ICL = iclabel(EEG_ica_002hz_39hz);
 pop_viewprops(EEG_ica_002hz_39hz_ICL,0,1:20);
@@ -199,9 +206,7 @@ set(gcf,'color','w','Colormap',diverging_bwr);
 pop_prop_extended(EEG_ica_002hz_ICL,0,1)
 set(gcf,'color','w','Colormap',diverging_bwr);
 
-% _what can be said of using low-pass in ICA and labelling?_
-
-    
+  
 %%
 % _Let's test different filters_
 if ~exist('all_filtICA.mat','file')
@@ -246,26 +251,27 @@ pop_viewprops(EEG_ica_2hz_39hz_ICL,0,1:20);
 set(gcf,'color','w','Colormap',diverging_bwr);
   
 %% Temporary filtering
-% *We can see that low frequency have more weights on ICA*
+% *We can see that low frequency have more weights on ICA*.
 % The 1st component for filtered data at 0.01Hz is classified as 'others'
-% with a power spectrum around 0, although it still have some 'brain' class
+% with a power spectrum around 0, although it still has some 'brain' class
 % associated to it. ICA/IClabel seem to work best with at least 1Hz filter,
 % possibly adding a low-pass at 40Hz. At the same time, we want data 
 % filtered at 0.05Hz. A solution is temporary filtering, that is filter
-% the data at say 2Hz/40Hz, compute ICA and labelling. We can then remove
+% the data at say 2Hz, compute ICA and labelling. We can then remove
 % the artefacts, i.e. components identified as such and backproject onto 
 % the 0.01Hz we want.
 
 % we use  for backprojection of ICA weight matrix and ICA sphere matrix
-EEG_ica_2hz_39hz  = keepICA(EEG_ica_2hz_39hz); 
-EEG_ica_bpr_002hz = ica_foreign_backproject(EEG_002hz,EEG_ica_2hz_39hz);
+EEG_ica_2hz  = keepICA(EEG_ica_2hz); 
+EEG_ica_bpr_002hz = ica_foreign_backproject(EEG_002hz,EEG_ica_2hz);
 
-% let's see what IClabel has to say about the back projection
+% _let's see what IClabel has to say about the back projection_
 % the low frequency component is gone (unsurprizingly)
 EEG_ica_bpr_002hz_ICL = iclabel(EEG_ica_bpr_002hz);
 pop_viewprops(EEG_ica_bpr_002hz_ICL,0,1:20);
 set(gcf,'color','w','Colormap',diverging_bwr);
 
+%%
 % automatically keep Brain components 
 EEG_ica_bpr_002hz_ICL_clean = pop_icflag(EEG_ica_bpr_002hz_ICL, IClabel_selection); 
 EEG_ica_bpr_002hz_ICL_clean = pop_subcomp(EEG_ica_bpr_002hz_ICL_clean,...
@@ -274,8 +280,9 @@ EEG_ica_bpr_002hz_ICL_clean = pop_subcomp(EEG_ica_bpr_002hz_ICL_clean,...
 % Sanity check 
 % we computed ICA for data at 0.2Hz/40Hz, back projected for the 0.01Hz
 % filtered data - re-ran IClabel, flag brain components, and projected them
-% onto the scalp creating a clean dataset. All components should now be
-% brain
+% onto the scalp creating a clean dataset. Most components should now be
+% brain ; we can see there still some muscle activity - how hard this is to
+% clean data! 
 
 pop_prop_extended(EEG_ica_bpr_002hz_ICL_clean, 0, 1:10)
 
@@ -361,27 +368,39 @@ for c = 1:3
 end
 
 % let's illustrate differences on a channel
-channel = 64;
+channel = 63;
 cl = [1 0 0; 0 1 0; 0 0 1];
 figure('Name','ERP channel 63');
+xvect = EEG_ica_002hz_ICL_clean_ca.times;
 for condition = 1:3
-    subplot(1,2,1);
-    plot(EEG_ica_002hz_ICL_clean_ca.times,...
-        mean(squeeze(EEG_ica_002hz_ICL_clean_ca.data(channel,:,logical(DesignMatrix(:,condition)))),2),...
-        'LineWidth',2,'Color',cl(condition,:));hold on
-    plot(EEG_ica_002hz_ICL_clean_ca.times,...
-        mean(squeeze(EEG_ica_002hz_ICL_clean_rest.data(channel,:,logical(DesignMatrix(:,condition)))),2),...
-        '--','LineWidth',2,'Color',cl(condition,:));
-    subplot(1,2,2);
-    plot(EEG_ica_002hz_ICL_clean_ca.times,...
-        mean(squeeze(EEG_ica_bpr_002hz_ICL_clean_ca.data(channel,:,logical(DesignMatrix(:,condition)))),2),...
-        'LineWidth',2,'Color',cl(condition,:));hold on
-    plot(EEG_ica_002hz_ICL_clean_ca.times,...
-        mean(squeeze(EEG_ica_bpr_002hz_ICL_clean_rest.data(channel,:,logical(DesignMatrix(:,condition)))),2),...
-        '--','LineWidth',2,'Color',cl(condition,:));
+    subplot(2,2,1);
+    ca   = squeeze(EEG_ica_002hz_ICL_clean_ca.data(channel,:,logical(DesignMatrix(:,condition))));
+    rest = squeeze(EEG_ica_002hz_ICL_clean_rest.data(channel,:,logical(DesignMatrix(:,condition))));
+    plot(xvect,mean(ca,2),'LineWidth',2,'Color',cl(condition,:));hold on
+    plot(xvect,mean(rest,2),'--','LineWidth',2,'Color',cl(condition,:));hold on
+    subplot(2,2,3);
+    plot(xvect,mean(ca-rest,2),'LineWidth',1,'Color',cl(condition,:));hold on
+    stderror= std(ca-rest,0,2) /sqrt(size(ca,2));
+    fillhandle = patch([xvect,fliplr(xvect)], ...
+        [(mean(ca-rest,2)-stderror./2)' flipud(mean(ca-rest,2)+stderror./2)'], cl(condition,:));
+    set(fillhandle,'EdgeColor',cl(condition,:),'FaceAlpha',0.2,'EdgeAlpha',0.2);
+    
+    subplot(2,2,2);
+    ca   = squeeze(EEG_ica_bpr_002hz_ICL_clean_ca.data(channel,:,logical(DesignMatrix(:,condition))));
+    rest = squeeze(EEG_ica_bpr_002hz_ICL_clean_rest.data(channel,:,logical(DesignMatrix(:,condition))));
+    plot(xvect,mean(ca,2),'LineWidth',2,'Color',cl(condition,:));hold on
+    plot(xvect,mean(rest,2),'--','LineWidth',2,'Color',cl(condition,:));hold on
+    subplot(2,2,4);
+    plot(xvect,mean(ca-rest,2),'LineWidth',1,'Color',cl(condition,:));hold on
+    stderror= std(ca-rest,0,2) /sqrt(size(ca,2));
+    fillhandle = patch([xvect,fliplr(xvect)], ...
+        [(mean(ca-rest,2)-stderror./2)' flipud(mean(ca-rest,2)+stderror./2)'], cl(condition,:));
+    set(fillhandle,'EdgeColor',cl(condition,:),'FaceAlpha',0.2,'EdgeAlpha',0.2);
 end
-subplot(1,2,1); title('standard IClabel');grid on; box on
-subplot(1,2,2); title('IClabel with temporary filtering');grid on; box on
+subplot(2,2,1); title('standard IClabel');grid on; box on
+subplot(2,2,2); title('IClabel with temporary filtering');grid on; box on
+subplot(2,2,3); title('difference CA-REST standard filtering');grid on; box on
+subplot(2,2,4); title('difference CA-REST with tmp filtering');grid on; box on
 drawnow
 
 %% 
@@ -407,47 +426,47 @@ end
 
 
 % we can also check across all channels
-figure('Name','Stat results (uncorrected)') 
+figure('Name','Stat results (uncorrected)','units','normalized','outerposition',[0 0 1 1])
 subplot(3,3,1);
 imagesc(EEG_ica_002hz_ICL_clean_ca.times,1:size(Fmap1,1),Fmap1.*(Pmap1<.05)); 
-set(gcf,'color','w','Colormap',diverging_bwr(129:end,:));
+colormap(gca, diverging_bwr(129:end,:)); caxis([0 50])
 xlabel('time (ms)'); ylabel('channels');
 title('Face effect IC with Filter 0.01Hz Ref: common')
 subplot(3,3,2);
 imagesc(EEG_ica_002hz_ICL_clean_ca.times,1:size(Fmap2,1),Fmap2.*(Pmap2<.05)); 
-set(gcf,'color','w','Colormap',diverging_bwr(129:end,:));
+colormap(gca, diverging_bwr(129:end,:));  caxis([0 50])
 xlabel('time (ms)'); ylabel('channels');
 title('Face effect IC with Filter 2Hz Ref: common')
 subplot(3,3,3);
 imagesc(EEG_ica_002hz_ICL_clean_ca.times,1:size(Fmap2,1),Pmap1-Pmap2)
-colormap(gca, diverging_bwr);
+colormap(gca, diverging_bwr);  caxis([-1 1])
 xlabel('time (ms)'); ylabel('channels');
 title('p-value differences')
 
 subplot(3,3,4);
 imagesc(EEG_ica_002hz_ICL_clean_ca.times,1:size(Fmap3,1),Fmap3.*(Pmap3<.05)); 
-set(gcf,'color','w','Colormap',diverging_bwr(129:end,:));
+colormap(gca, diverging_bwr(129:end,:));  caxis([0 50])
 xlabel('time (ms)'); ylabel('channels');
 title('Face effect IC with Filter 0.01Hz Ref: rest')
 subplot(3,3,5);
 imagesc(EEG_ica_002hz_ICL_clean_ca.times,1:size(Fmap4,1),Fmap4.*(Pmap4<.05)); 
-set(gcf,'color','w','Colormap',diverging_bwr(129:end,:));
+colormap(gca, diverging_bwr(129:end,:));  caxis([0 50])
 xlabel('time (ms)'); ylabel('channels');
 title('Face effect IC with Filter 0.01Hz Ref: rest')
 subplot(3,3,6);
 imagesc(EEG_ica_002hz_ICL_clean_ca.times,1:size(Fmap3,1),Pmap3-Pmap4)
-colormap(gca, diverging_bwr);
+colormap(gca, diverging_bwr);  caxis([-1 1])
 xlabel('time (ms)'); ylabel('channels');
 title('p-value differences')
 
 subplot(3,3,7);
 imagesc(EEG_ica_002hz_ICL_clean_ca.times,1:size(Fmap1,1),Pmap1-Pmap3)
-colormap(gca, diverging_bwr);
+colormap(gca, diverging_bwr); caxis([-1 1])
 xlabel('time (ms)'); ylabel('channels');
 title('p-value differences')
 subplot(3,3,8);
 imagesc(EEG_ica_002hz_ICL_clean_ca.times,1:size(Fmap2,1),Pmap2-Pmap4)
-colormap(gca, diverging_bwr);
+colormap(gca, diverging_bwr); caxis([-1 1])
 xlabel('time (ms)'); ylabel('channels');
 title('p-value differences')
 
@@ -458,7 +477,7 @@ all(:,:,2) = Fmap2;
 all(:,:,3) = Fmap3;
 all(:,:,4) = Fmap4;
 imagesc(EEG_ica_002hz_ICL_clean_ca.times,1:size(Fmap2,1),std(all,[],3))
-colormap(gca, diverging_bwr);
+colormap(gca, hot); caxis([0 10])
 xlabel('time (ms)'); ylabel('channels');
 title('F-values vibration (std among methods)')
 
