@@ -34,6 +34,6 @@ Also recommended:
 
 This method is demonstrated using Python and MNE-Python with simulated data (because we know the truth).
 
-This can be run in the Jupyter notebook.
+This can be run in the [Jupyter notebook](https://github.com/CPernet/EEGPreprocessing_Not_so_Basic/blob/master/code/demo_cov_phantom.ipynb).
 
-/code folder contains all the code necessary to run the analyses
+[/code folder](https://github.com/CPernet/EEGPreprocessing_Not_so_Basic/tree/master/code) contains all the code necessary to run the analyses
