@@ -2,7 +2,7 @@
 
 This repository was created for OHBM Education 2020. The code presents the different aspects discussed in the course. It combines different elements into a coherent analysis illustrating the choices to make when analysis EEG data, here from a simple ERP experiment.
 
-The rendering for the Matlab/EEGLAB code (filtering, ICA denoising, referencing) can be seen [here](https://cpernet.github.io/EEGPreprocessing_Not_so_Basic/).
+The rendering for the Matlab/[EEGLAB](https://sccn.ucsd.edu/eeglab/index.php) code (filtering, ICA denoising, referencing) can be seen [here](https://cpernet.github.io/EEGPreprocessing_Not_so_Basic/).
 The code and rendering for the [MNE-Python](https://mne.tools/) material can be seen [here](https://github.com/CPernet/EEGPreprocessing_Not_so_Basic/blob/master/code/demo_cov_phantom.ipynb)
 
 A [separate repository](https://github.com/ainapuce/OHBM2020_EEGCourse_Pernet-Puce) exists to look at the effect of data acquisition systems - especially portable systems that offers great opportunities for more naturalistics approches, but present challenges in terms of data pre-processing.
